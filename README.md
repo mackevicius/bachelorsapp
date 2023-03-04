@@ -1,0 +1,2 @@
+# bachelorsapp
+Bachelors thesis app
