@@ -1,24 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navbar, NavbarBrand, UncontrolledTooltip } from 'reactstrap';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { DefaultEditor } from 'react-simple-wysiwyg';
 import Avatar from 'react-avatar';
 
 import './App.css';
+import useAuth from './useAuth';
 
-const WS_URL = 'ws://127.0.0.1:8000';
+const WS_URL = 'ws://127.0.0.1:3001';
 
-function isUserEvent(message: any) {
-  let evt = JSON.parse(message.data);
+function isUserEvent(message: any): boolean {
+  const evt = JSON.parse(message.data);
   return evt.type === 'userevent';
 }
 
 function isDocumentEvent(message: any) {
-  let evt = JSON.parse(message.data);
+  const evt = JSON.parse(message.data);
   return evt.type === 'contentchange';
 }
 
-function App() {
+function App({ code }: { code: string }) {
+  const accessToken = useAuth(code);
+
   const [username, setUsername] = useState('');
   const { sendJsonMessage, readyState } = useWebSocket(WS_URL, {
     onOpen: () => {

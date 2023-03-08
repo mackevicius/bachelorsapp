@@ -1,13 +1,87 @@
 const { WebSocket, WebSocketServer } = require('ws');
 const http = require('http');
+const axios = require('axios');
 const uuidv4 = require('uuid').v4;
+var cors = require('cors');
+var SpotifyWebApi = require('spotify-web-api-node');
+const bodyParser = require('body-parser');
+
+const express = require('express');
+const dotenv = require('dotenv');
+const { error } = require('console');
+
+dotenv.config();
+
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const REDIRECT_URI = process.env.REDIRECT_URI;
+
+var app = express();
+app.use(cors());
 
 // Spinning the http server and the WebSocket server.
-const server = http.createServer();
+const server = http.createServer(app);
 const wsServer = new WebSocketServer({ server });
-const port = 8000;
-server.listen(port, () => {
-  console.log(`WebSocket server is running on port ${port}`);
+
+const generateRandomString = function (length) {
+  var text = '';
+  var possible =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+  for (var i = 0; i < length; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+};
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.post('/refresh', (req, res) => {
+  const refreshToken = req.body.refreshToken;
+  const spotifyApi = new SpotifyWebApi({
+    redirectUri: process.env.REDIRECT_URI,
+    clientId: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    refreshToken,
+  });
+
+  spotifyApi
+    .refreshAccessToken()
+    .then((data) => {
+      res.json({
+        accessToken: data.body.access_token,
+        expiresIn: data.body.expires_in,
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.sendStatus(400);
+    });
+});
+
+app.post('/login', (req, res) => {
+  const code = req.body.code;
+  const spotifyApi = new SpotifyWebApi({
+    redirectUri: process.env.REDIRECT_URI,
+    clientId: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+  });
+
+  spotifyApi
+    .authorizationCodeGrant(code)
+    .then((data) => {
+      res.json({
+        accessToken: data.body.access_token,
+        refreshToken: data.body.refresh_token,
+        expiresIn: data.body.expires_in,
+      });
+    })
+    .catch((err) => {
+      if (err.statusCode !== 400) {
+        res.send(err.statusCode);
+      }
+    });
 });
 
 // I'm maintaining all active connections in this object
@@ -75,3 +149,5 @@ wsServer.on('connection', function (connection) {
   // User disconnected
   connection.on('close', () => handleDisconnect(userId));
 });
+
+server.listen(3001);
