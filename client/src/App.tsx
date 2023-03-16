@@ -7,7 +7,11 @@ import Avatar from 'react-avatar';
 import './App.css';
 import useAuth from './useAuth';
 
-const WS_URL = 'wss://playlist-app-spotify.azurewebsites.net';
+export const getSocketUrl = (): string => {
+  if (process.env.NODE_ENV === 'development')
+    return process.env.REACT_APP_SOCKET_URL_DEV ?? '';
+  return process.env.REACT_APP_SOCKET_URL_PROD ?? '';
+};
 
 function isUserEvent(message: any): boolean {
   const evt = JSON.parse(message.data);
@@ -25,7 +29,7 @@ function App({ code }: { code: string }) {
   console.log(process.env);
 
   const [username, setUsername] = useState('');
-  const { sendJsonMessage, readyState } = useWebSocket(WS_URL, {
+  const { sendJsonMessage, readyState } = useWebSocket(getSocketUrl(), {
     onOpen: () => {
       console.log('WebSocket connection established.');
     },
@@ -58,7 +62,7 @@ function App({ code }: { code: string }) {
 
 function LoginSection({ onLogin }: any) {
   const [username, setUsername] = useState('');
-  useWebSocket(WS_URL, {
+  useWebSocket(getSocketUrl(), {
     share: true,
     filter: () => false,
   });
@@ -97,7 +101,7 @@ function LoginSection({ onLogin }: any) {
 
 function History() {
   console.log('history');
-  const { lastJsonMessage } = useWebSocket(WS_URL, {
+  const { lastJsonMessage } = useWebSocket(getSocketUrl(), {
     share: true,
     filter: isUserEvent,
   });
@@ -112,7 +116,7 @@ function History() {
 }
 
 function Users() {
-  const { lastJsonMessage } = useWebSocket(WS_URL, {
+  const { lastJsonMessage } = useWebSocket(getSocketUrl(), {
     share: true,
     filter: isUserEvent,
   });
@@ -150,7 +154,7 @@ function EditorSection() {
 }
 
 function Document() {
-  const { lastJsonMessage, sendJsonMessage } = useWebSocket(WS_URL, {
+  const { lastJsonMessage, sendJsonMessage } = useWebSocket(getSocketUrl(), {
     share: true,
     filter: isDocumentEvent,
   });

@@ -12,10 +12,6 @@ const { error } = require('console');
 
 dotenv.config();
 
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI;
-
 var app = express();
 app.use(cors());
 
@@ -37,10 +33,18 @@ const generateRandomString = function (length) {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+const getRedirectUri = () => {
+  if (process.env.NODE_ENV === 'development')
+    return process.env.REDIRECT_URI_DEV;
+  else {
+    return process.env.REDIRECT_URI_PROD;
+  }
+};
+
 app.post('/refresh', (req, res) => {
   const refreshToken = req.body.refreshToken;
   const spotifyApi = new SpotifyWebApi({
-    redirectUri: process.env.REDIRECT_URI,
+    redirectUri: getRedirectUri(),
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     refreshToken,
@@ -63,7 +67,7 @@ app.post('/refresh', (req, res) => {
 app.post('/login', (req, res) => {
   const code = req.body.code;
   const spotifyApi = new SpotifyWebApi({
-    redirectUri: process.env.REDIRECT_URI,
+    redirectUri: getRedirectUri(),
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
   });

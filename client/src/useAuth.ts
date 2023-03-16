@@ -6,9 +6,16 @@ export default function useAuth(code: string) {
   const [refreshToken, setRefreshToken] = useState();
   const [expiresIn, setExpiresIn] = useState<number>();
 
+  const getApiUrl = () => {
+    if (process.env.NODE_ENV === 'development')
+      return process.env.REACT_APP_API_URL_DEV;
+    return process.env.REACT_APP_API_URL_PROD;
+  };
+
   useEffect(() => {
+    console.log(`${getApiUrl()}/login`);
     axios
-      .post('https://playlist-app-spotify.azurewebsites.net/login', {
+      .post(`${getApiUrl()}/login`, {
         code,
       })
       .then((res) => {
@@ -19,7 +26,8 @@ export default function useAuth(code: string) {
         window.history.pushState({}, '', '/');
       })
       .catch((err) => {
-        window.location = '/' as any;
+        console.error(err);
+        // window.location = '/' as any;
       });
   }, [code]);
 
@@ -27,7 +35,7 @@ export default function useAuth(code: string) {
     if (!refreshToken || !expiresIn) return;
     const interval = setInterval(() => {
       axios
-        .post('https://playlist-app-spotify.azurewebsites.net/refresh', {
+        .post(`${getApiUrl()}/refresh`, {
           refreshToken,
         })
         .then((res) => {

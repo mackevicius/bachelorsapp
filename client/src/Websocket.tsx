@@ -1,27 +1,21 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { getSocketUrl } from './App';
 
 export const WebSocketDemo = () => {
   //Public API that will echo messages sent to it back to the client
   //.env
   //configuration file
-  const [socketUrl, setSocketUrl] = useState(
-    'wss://playlist-app-spotify.azurewebsites.net:8080'
-  );
+
   const [messageHistory, setMessageHistory] = useState([]);
 
-  const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
+  const { sendMessage, lastMessage, readyState } = useWebSocket(getSocketUrl());
 
   useEffect(() => {
     if (lastMessage !== null) {
       setMessageHistory((prev) => prev.concat(lastMessage?.data));
     }
   }, [lastMessage, setMessageHistory]);
-
-  const handleClickChangeSocketUrl = useCallback(
-    () => setSocketUrl('wss://demos.kaazing.com/echo'),
-    []
-  );
 
   const handleClickSendMessage = useCallback(() => sendMessage('Hello'), []);
 
@@ -35,9 +29,7 @@ export const WebSocketDemo = () => {
 
   return (
     <div>
-      <button onClick={handleClickChangeSocketUrl}>
-        Click Me to change Socket Url
-      </button>
+      <button>Click Me to change Socket Url</button>
       <button
         onClick={handleClickSendMessage}
         disabled={readyState !== ReadyState.OPEN}
