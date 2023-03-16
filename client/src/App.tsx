@@ -26,8 +26,6 @@ function isDocumentEvent(message: any) {
 function App({ code }: { code: string }) {
   const accessToken = useAuth(code);
 
-  console.log(process.env);
-
   const [username, setUsername] = useState('');
   const { sendJsonMessage, readyState } = useWebSocket(getSocketUrl(), {
     onOpen: () => {
