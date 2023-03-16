@@ -48,6 +48,8 @@ function App({ code }: { code: string }) {
     }
   }, [username, sendJsonMessage, readyState]);
 
+  console.log('hey');
+
   return (
     <>
       <Navbar color="light" light>
