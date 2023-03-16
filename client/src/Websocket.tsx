@@ -3,7 +3,11 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 export const WebSocketDemo = () => {
   //Public API that will echo messages sent to it back to the client
-  const [socketUrl, setSocketUrl] = useState('ws://127.0.0.1:8080');
+  //.env
+  //configuration file
+  const [socketUrl, setSocketUrl] = useState(
+    'wss://playlist-app-spotify.azurewebsites.net:8080'
+  );
   const [messageHistory, setMessageHistory] = useState([]);
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);

@@ -7,7 +7,7 @@ import Avatar from 'react-avatar';
 import './App.css';
 import useAuth from './useAuth';
 
-const WS_URL = 'ws://127.0.0.1:8080';
+const WS_URL = 'wss://playlist-app-spotify.azurewebsites.net';
 
 function isUserEvent(message: any): boolean {
   const evt = JSON.parse(message.data);
@@ -21,6 +21,8 @@ function isDocumentEvent(message: any) {
 
 function App({ code }: { code: string }) {
   const accessToken = useAuth(code);
+
+  console.log(process.env);
 
   const [username, setUsername] = useState('');
   const { sendJsonMessage, readyState } = useWebSocket(WS_URL, {
