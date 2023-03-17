@@ -1,21 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-
-export const getApiUrl = () => {
-  if (process.env.NODE_ENV === 'development')
-    return process.env.REACT_APP_API_URL_DEV;
-  return process.env.REACT_APP_API_URL_PROD;
-};
+import { Context } from './appContext';
 
 export default function useAuth(code: string) {
   const [accessToken, setAccessToken] = useState();
   const [refreshToken, setRefreshToken] = useState();
   const [expiresIn, setExpiresIn] = useState<number>();
 
+  const context = useContext(Context);
+
   useEffect(() => {
-    console.log(`${getApiUrl()}/login`);
+    console.log(`${context.apiUrl}/login`);
     axios
-      .post(`${getApiUrl()}/login`, {
+      .post(`${context.apiUrl}/login`, {
         code,
       })
       .then((res) => {
@@ -34,7 +31,7 @@ export default function useAuth(code: string) {
     if (!refreshToken || !expiresIn) return;
     const interval = setInterval(() => {
       axios
-        .post(`${getApiUrl()}/refresh`, {
+        .post(`${context.apiUrl}/refresh`, {
           refreshToken,
         })
         .then((res) => {

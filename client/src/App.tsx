@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { Navbar, NavbarBrand, UncontrolledTooltip } from 'reactstrap';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { DefaultEditor } from 'react-simple-wysiwyg';
@@ -6,20 +6,8 @@ import Avatar from 'react-avatar';
 import axios from 'axios';
 
 import './App.css';
-import useAuth, { getApiUrl } from './useAuth';
-
-export const getSocketUrl = (): string => {
-  if (process.env.NODE_ENV === 'development')
-    return process.env.REACT_APP_SOCKET_URL_DEV ?? '';
-  return process.env.REACT_APP_SOCKET_URL_PROD ?? '';
-};
-
-const deleteItem = async () => {
-  axios.post(`${getApiUrl()}/delete`, {
-    id: 'Povilas',
-    partitionKey: 'viensdu',
-  });
-};
+import useAuth from './useAuth';
+import { Context } from './appContext';
 
 function isUserEvent(message: any): boolean {
   const evt = JSON.parse(message.data);
@@ -33,9 +21,10 @@ function isDocumentEvent(message: any) {
 
 function App({ code }: { code: string }) {
   const accessToken = useAuth(code);
+  const context = useContext(Context);
 
   const [username, setUsername] = useState('');
-  const { sendJsonMessage, readyState } = useWebSocket(getSocketUrl(), {
+  const { sendJsonMessage, readyState } = useWebSocket(context.socketUrl, {
     onOpen: () => {
       console.log('WebSocket connection established.');
     },
@@ -47,12 +36,12 @@ function App({ code }: { code: string }) {
 
   useEffect(() => {
     const getItems = async () => {
-      const response = await fetch(`${getApiUrl()}/items`);
+      const response = await fetch(`${context.apiUrl}/items`);
       const data = await response.json();
       console.log(data);
     };
     const replace = async () => {
-      axios.post(`${getApiUrl()}/update`, {
+      axios.post(`${context.apiUrl}/update`, {
         id: 'lopas',
         labas: 'hujan22as21',
       });
@@ -91,8 +80,10 @@ function App({ code }: { code: string }) {
 }
 
 function LoginSection({ onLogin }: any) {
+  const context = useContext(Context);
+
   const [username, setUsername] = useState('');
-  useWebSocket(getSocketUrl(), {
+  useWebSocket(context.socketUrl, {
     share: true,
     filter: () => false,
   });
@@ -119,7 +110,6 @@ function LoginSection({ onLogin }: any) {
           <button
             type="button"
             onClick={() => {
-              deleteItem();
               logInUser();
             }}
             className="btn btn-primary account__btn"
@@ -133,8 +123,9 @@ function LoginSection({ onLogin }: any) {
 }
 
 function History() {
-  console.log('history');
-  const { lastJsonMessage } = useWebSocket(getSocketUrl(), {
+  const context = useContext(Context);
+
+  const { lastJsonMessage } = useWebSocket(context.socketUrl, {
     share: true,
     filter: isUserEvent,
   });
@@ -149,7 +140,8 @@ function History() {
 }
 
 function Users() {
-  const { lastJsonMessage } = useWebSocket(getSocketUrl(), {
+  const context = useContext(Context);
+  const { lastJsonMessage } = useWebSocket(context.socketUrl, {
     share: true,
     filter: isUserEvent,
   });
@@ -187,7 +179,8 @@ function EditorSection() {
 }
 
 function Document() {
-  const { lastJsonMessage, sendJsonMessage } = useWebSocket(getSocketUrl(), {
+  const context = useContext(Context);
+  const { lastJsonMessage, sendJsonMessage } = useWebSocket(context.socketUrl, {
     share: true,
     filter: isDocumentEvent,
   });

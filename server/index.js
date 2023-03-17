@@ -14,7 +14,7 @@ const {
   createFamilyItem,
   replaceFamilyItem,
   deleteFamilyItem,
-} = require('./app');
+} = require('./dbIndex');
 
 dotenv.config();
 
