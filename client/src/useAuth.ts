@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
+export const getApiUrl = () => {
+  if (process.env.NODE_ENV === 'development')
+    return process.env.REACT_APP_API_URL_DEV;
+  return process.env.REACT_APP_API_URL_PROD;
+};
+
 export default function useAuth(code: string) {
   const [accessToken, setAccessToken] = useState();
   const [refreshToken, setRefreshToken] = useState();
   const [expiresIn, setExpiresIn] = useState<number>();
-
-  const getApiUrl = () => {
-    if (process.env.NODE_ENV === 'development')
-      return process.env.REACT_APP_API_URL_DEV;
-    return process.env.REACT_APP_API_URL_PROD;
-  };
 
   useEffect(() => {
     console.log(`${getApiUrl()}/login`);
@@ -26,8 +26,7 @@ export default function useAuth(code: string) {
         window.history.pushState({}, '', '/');
       })
       .catch((err) => {
-        console.error(err);
-        // window.location = '/' as any;
+        window.location = '/' as any;
       });
   }, [code]);
 
