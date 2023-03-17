@@ -3,14 +3,22 @@ import { Navbar, NavbarBrand, UncontrolledTooltip } from 'reactstrap';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { DefaultEditor } from 'react-simple-wysiwyg';
 import Avatar from 'react-avatar';
+import axios from 'axios';
 
 import './App.css';
-import useAuth from './useAuth';
+import useAuth, { getApiUrl } from './useAuth';
 
 export const getSocketUrl = (): string => {
   if (process.env.NODE_ENV === 'development')
     return process.env.REACT_APP_SOCKET_URL_DEV ?? '';
   return process.env.REACT_APP_SOCKET_URL_PROD ?? '';
+};
+
+const deleteItem = async () => {
+  axios.post(`${getApiUrl()}/delete`, {
+    id: 'Povilas',
+    partitionKey: 'viensdu',
+  });
 };
 
 function isUserEvent(message: any): boolean {
@@ -38,6 +46,30 @@ function App({ code }: { code: string }) {
   });
 
   useEffect(() => {
+    const getItems = async () => {
+      const response = await fetch(`${getApiUrl()}/items`);
+      const data = await response.json();
+      console.log(data);
+    };
+    const replace = async () => {
+      axios.post(`${getApiUrl()}/update`, {
+        id: 'lopas',
+        labas: 'hujan22as21',
+      });
+    };
+
+    // const addItem = async () => {
+    //   axios.post(`${getApiUrl()}/add`, {
+    //     id: 'Povilas',
+    //     partitionKey: 'viensdu',
+    //   });
+    // };
+    // replace();
+    // addItem();
+    getItems();
+  }, []);
+
+  useEffect(() => {
     if (username && readyState === ReadyState.OPEN) {
       sendJsonMessage({
         username,
@@ -45,8 +77,6 @@ function App({ code }: { code: string }) {
       });
     }
   }, [username, sendJsonMessage, readyState]);
-
-  console.log('hey');
 
   return (
     <>
@@ -88,7 +118,10 @@ function LoginSection({ onLogin }: any) {
           />
           <button
             type="button"
-            onClick={() => logInUser()}
+            onClick={() => {
+              deleteItem();
+              logInUser();
+            }}
             className="btn btn-primary account__btn"
           >
             Join

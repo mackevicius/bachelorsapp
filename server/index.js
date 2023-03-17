@@ -9,6 +9,12 @@ const bodyParser = require('body-parser');
 const express = require('express');
 const dotenv = require('dotenv');
 const { error } = require('console');
+const {
+  queryContainer,
+  createFamilyItem,
+  replaceFamilyItem,
+  deleteFamilyItem,
+} = require('./app');
 
 dotenv.config();
 
@@ -85,6 +91,46 @@ app.post('/login', (req, res) => {
       if (err.statusCode !== 400) {
         res.send(err.statusCode);
       }
+    });
+});
+
+app.get('/items', (req, res) => {
+  queryContainer()
+    .then((result) => {
+      res.send(result);
+    })
+    .catch((err) => {
+      res.sendStatus(400);
+    });
+});
+
+app.post('/add', (req, res) => {
+  createFamilyItem(req.body)
+    .then((res) => {
+      res.send(true);
+    })
+    .catch((err) => {
+      res.send(err);
+    });
+});
+
+app.post('/update', (req, res) => {
+  replaceFamilyItem(req.body)
+    .then((res) => {
+      res.send(true);
+    })
+    .catch((err) => {
+      res.send(err);
+    });
+});
+app.post('/delete', (req, res) => {
+  deleteFamilyItem(req.body)
+    .then((res) => {
+      res.send(true);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.send(err.code);
     });
 });
 
