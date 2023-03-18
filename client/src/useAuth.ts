@@ -10,12 +10,15 @@ export default function useAuth(code: string) {
   const context = useContext(Context);
 
   useEffect(() => {
-    console.log(`${context.apiUrl}/login`);
+    console.log('TOKENAS', accessToken);
+  }, [accessToken]);
+  useEffect(() => {
     axios
       .post(`${context.apiUrl}/login`, {
         code,
       })
       .then((res) => {
+        console.log(res);
         console.log((res.data.expiresIn - 60) * 1000);
         setAccessToken(res.data.accessToken);
         setRefreshToken(res.data.refreshToken);
@@ -23,7 +26,8 @@ export default function useAuth(code: string) {
         window.history.pushState({}, '', '/');
       })
       .catch((err) => {
-        window.location = '/' as any;
+        console.log('asdasdasdasdasdasdasdas');
+        // window.location = '/' as any;
       });
   }, [code]);
 

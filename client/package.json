@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
+    "@mui/material": "^5.11.13",
     "@types/jest": "^29.4.0",
     "@types/node": "^18.14.2",
     "@types/react": "^18.0.28",
@@ -11,6 +14,7 @@
     "react": "^18.2.0",
     "react-avatar": "^5.0.3",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^6.9.0",
     "react-scripts": "5.0.1",
     "react-simple-wysiwyg": "^2.1.4",
     "react-use-websocket": "^4.2.0",
