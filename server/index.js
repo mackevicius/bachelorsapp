@@ -14,7 +14,7 @@ const {
   createFamilyItem,
   replaceFamilyItem,
   deleteFamilyItem,
-} = require('./app');
+} = require('./dbIndex');
 
 dotenv.config();
 
@@ -88,6 +88,7 @@ app.post('/login', (req, res) => {
       });
     })
     .catch((err) => {
+      // console.log(err);
       if (err.statusCode !== 400) {
         res.send(err.statusCode);
       }
@@ -123,6 +124,7 @@ app.post('/update', (req, res) => {
       res.send(err);
     });
 });
+
 app.post('/delete', (req, res) => {
   deleteFamilyItem(req.body)
     .then((res) => {

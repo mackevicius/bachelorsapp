@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useContext } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
-import { getSocketUrl } from './App';
+import { Context } from './appContext';
 
 export const WebSocketDemo = () => {
   //Public API that will echo messages sent to it back to the client
@@ -8,8 +8,11 @@ export const WebSocketDemo = () => {
   //configuration file
 
   const [messageHistory, setMessageHistory] = useState([]);
+  const context = useContext(Context);
 
-  const { sendMessage, lastMessage, readyState } = useWebSocket(getSocketUrl());
+  const { sendMessage, lastMessage, readyState } = useWebSocket(
+    context.socketUrl
+  );
 
   useEffect(() => {
     if (lastMessage !== null) {
