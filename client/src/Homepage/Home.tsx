@@ -7,6 +7,7 @@ import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import styles from './Home.module.scss';
+import { PlaylistLoadingSkeleton } from '../common/PlaylistLoadingSkeleton';
 
 interface Props {
   code: string;
@@ -20,6 +21,7 @@ export const Home: React.FC<Props> = ({ code }) => {
   const accessToken = useAuth(code);
   console.log(code);
   const [playlists, setPlaylists] = useState<any>();
+  const [loading, setLoading] = useState<boolean>(true);
   useEffect(() => {
     if (accessToken) {
       spotifyApi.setAccessToken(accessToken);
@@ -28,6 +30,7 @@ export const Home: React.FC<Props> = ({ code }) => {
         .then((res) => {
           console.log(res.body.items);
           setPlaylists(res.body.items);
+          setLoading(false);
         })
         .catch((err) => {
           console.error(err);
@@ -38,15 +41,24 @@ export const Home: React.FC<Props> = ({ code }) => {
   }, [accessToken]);
   return (
     <div className={styles.cardContainer}>
-      {playlists?.map((x: SpotifyApi.PlaylistBaseObject) => (
-        <Card key={x.id} style={{ width: 200, height: 150 }}>
-          <CardMedia
-            image={x.images[0].url}
-            sx={{ height: '70%' }}
-            title={x.name}
-          />
-        </Card>
-      ))}
+      {loading ? (
+        <PlaylistLoadingSkeleton />
+      ) : (
+        playlists?.map((x: SpotifyApi.PlaylistBaseObject) => (
+          <Card
+            key={x.id}
+            style={{ width: 200, height: 150 }}
+            className={styles.playlistCard}
+          >
+            <CardMedia
+              image={x.images[0].url}
+              sx={{ height: '70%' }}
+              title={x.name}
+            />
+          </Card>
+        ))
+      )}
+      {}
     </div>
   );
 };
