@@ -11,9 +11,16 @@ const App2 = () => {
   return (
     <Context.Provider value={defaultValue}>
       <Routes>
+        {code && <Route path="/home" element={<Home code={code} />} />}
         <Route
           path="/"
-          element={code ? <Home code={code} /> : <Navigate to="/login" />}
+          element={
+            code ? (
+              <Navigate replace to="/home" />
+            ) : (
+              <Navigate replace to="/login" />
+            )
+          }
         />
         <Route path="/login" element={<Login />} />
       </Routes>
