@@ -170,7 +170,7 @@ router.get('/getPlaylists', (req, res) => {
   if (!req.session.user) {
     console.log(req.user);
     console.log(req.session.user);
-    res.status(400).send('loggedOut');
+    res.status(401).send('loggedOut');
   } else {
     const spotifyApi = new SpotifyWebApi({
       clientId: process.env.CLIENT_ID,
