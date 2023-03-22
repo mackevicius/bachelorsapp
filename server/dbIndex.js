@@ -8,9 +8,9 @@ const endpoint = config.endpoint;
 
 const key = config.key;
 
-const databaseId = config.database.id;
+const databaseId = 'Playlists';
 
-const containerId = config.container.id;
+const containerId = 'playlists';
 
 const partitionKey = { kind: 'Hash', paths: ['/partitionKey'] };
 
@@ -107,12 +107,16 @@ async function createFamilyItem(itemBody) {
     .items.create(itemBody);
 }
 
+async function addTrack(itemBody) {
+  await client
+    .database(databaseId)
+    .container(containerId)
+    .items.create(itemBody);
+}
 /**
  * Query the container using SQL
  */
 async function queryContainer() {
-  console.log(`Querying container:\n${config.container.id}`);
-
   // query to return all children in a family
   // Including the partition key value of country in the WHERE filter results in a more efficient query
   const querySpec = {
@@ -153,6 +157,94 @@ async function replaceFamilyItem(itemBody) {
     .item(itemBody.id, itemBody.partitionKey)
     .replace(itemBody);
 }
+function randomInteger(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+async function uploadInfo(containerId, itemBody) {
+  // console.log(itemBody.partitionKey);
+  // Change property 'grade'
+
+  const tracks = itemBody.tracks.map((x) => {
+    return {
+      trackId: x,
+      votes: randomInteger(1, 100),
+    };
+  });
+
+  const newBody = {
+    id: itemBody.id,
+    tracks,
+  };
+  const { item } = await client
+    .database(databaseId)
+    .container(containerId)
+    .item(newBody.id)
+    .replace(newBody);
+}
+
+async function validateTracks(tracks, playlistId) {
+  const { resources: results } = await client
+    .database(databaseId)
+    .container(containerId)
+    .items.query(`SELECT * from c where c.id="${playlistId}"`)
+    .fetchAll();
+  const trackArray = [];
+
+  if (results[0]) {
+    const dbTracks = results[0].tracks;
+    let newTracks = 0;
+    tracks.forEach((spotifyTrack, index) => {
+      let votes = 0;
+      const match = dbTracks.find((databaseTrack) => {
+        return databaseTrack.trackId === spotifyTrack.track.id;
+      });
+      if (!match) {
+        addTrack({
+          id: spotifyTrack.id,
+          votes: votes,
+        })
+          .then(() => {
+            newTracks++;
+          })
+          .catch((err) => console.log(err));
+      } else {
+        votes = match.votes;
+        trackArray[index] = spotifyTrack;
+        trackArray[index].votes = votes;
+      }
+    });
+    if (newTracks !== 0) {
+      throw new Error('tracksMismatch');
+    } else {
+      return JSON.stringify(trackArray);
+    }
+  } else {
+    const newItem = {
+      id: playlistId,
+      tracks: tracks.map((x) => {
+        return {
+          trackId: x.track.id,
+          votes: 0,
+        };
+      }),
+    };
+    tracks.map((x, index) => {
+      trackArray[index] = x;
+      trackArray[index].votes = 0;
+    });
+    const { resource } = await client
+      .database(databaseId)
+      .container(containerId)
+      .items.create(newItem);
+
+    if (resource) {
+      return JSON.stringify(trackArray);
+    } else {
+      throw new Error('Not able to create item');
+    }
+  }
+}
 
 /**
  * Delete the item by ID.
@@ -177,4 +269,6 @@ module.exports = {
   createFamilyItem,
   replaceFamilyItem,
   deleteFamilyItem,
+  uploadInfo,
+  validateTracks,
 };

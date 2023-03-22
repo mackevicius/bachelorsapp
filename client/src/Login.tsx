@@ -1,14 +1,18 @@
-import { useContext } from 'react';
+import axios from 'axios';
+import { useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Context } from './appContext';
 
 const Login = () => {
   const context = useContext(Context);
+  const navigate = useNavigate();
 
-  const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=2f260998e40849128281a3758eb04453&response_type=code&redirect_uri=${context.redirectUri}&scope=streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state`;
-
+  useEffect(() => {
+    if (localStorage.getItem('loggedIn')) navigate('/');
+  }, []);
   return (
     <div>
-      <a href={AUTH_URL}>Login</a>
+      <a href={`${context.apiUrl}/login`}>Login</a>
     </div>
   );
 };

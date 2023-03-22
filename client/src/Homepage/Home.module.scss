@@ -1,4 +1,14 @@
+.homePageContainer {
+  display: flex;
+}
+
 .cardContainer {
   display: flex;
   flex-direction: row;
+}
+
+.playlistCard {
+  &:hover {
+    cursor: pointer;
+  }
 }
