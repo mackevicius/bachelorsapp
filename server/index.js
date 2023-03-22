@@ -168,7 +168,7 @@ router.get(
   passport.authenticate('spotify', { failureRedirect: '/login' }),
   (req, res) => {
     res.cookie('lopas', req.user);
-    res.cookie('duhas', 'hei');
+    res.cookie('duhas', 'hei', { secure: true, sameSite: 'none' });
     req.session.user = req.user;
     res.redirect(getCallbackRedirectUri());
   }
