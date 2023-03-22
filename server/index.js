@@ -167,14 +167,16 @@ router.get(
 );
 
 router.get('/getPlaylists', (req, res) => {
-  if (!req.user) {
+  if (!req.session.user) {
+    console.log(req.user);
+    console.log(req.session.user);
     res.status(400).send('loggedOut');
   } else {
     const spotifyApi = new SpotifyWebApi({
       clientId: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
-      accessToken: req.user.accessToken,
-      refreshToken: req.user.refreshToken,
+      accessToken: req.session.user.accessToken,
+      refreshToken: req.session.user.refreshToken,
     });
     spotifyApi
       .getUserPlaylists('21y65ubkr6wutgxvdnj6f333a', {})
