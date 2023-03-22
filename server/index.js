@@ -120,12 +120,17 @@ const sessionConfig = {
   saveUninitialized: false,
   cookie: {
     sameSite: process.env.NODE_ENV === 'production' && 'none',
+    domain:
+      process.env.NODE_ENV === 'development'
+        ? 'localhost'
+        : 'https://gray-forest-0b9a13e03.2.azurestaticapps.net',
   },
 };
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1); // trust first proxy
   sessionConfig.cookie.secure = true; // serve secure cookies
 }
+
 app.use(session(sessionConfig));
 
 app.use(passport.initialize());
