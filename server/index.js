@@ -98,7 +98,7 @@ app.use(
   })
 );
 
-app.use(cookies());
+app.use(cookies('SPOTIFY_BLABLA'));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -111,14 +111,6 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
-
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'build')));
-
-  app.get('/*', function (req, res) {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
-  });
-}
 
 router.use((req, res, next) => {
   const refreshToken = req.user?.refreshToken;
