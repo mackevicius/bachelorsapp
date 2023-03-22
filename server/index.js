@@ -122,12 +122,11 @@ const sessionConfig = {
     sameSite: 'none',
   },
 };
-app.use(session(sessionConfig));
-
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1); // trust first proxy
   sessionConfig.cookie.secure = true; // serve secure cookies
 }
+app.use(session(sessionConfig));
 
 app.use(passport.initialize());
 app.use(passport.session());
