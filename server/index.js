@@ -10,7 +10,6 @@ const querystring = require('querystring');
 const SpotifyStrategy = require('passport-spotify').Strategy;
 const passport = require('passport');
 const session = require('express-session');
-
 const express = require('express');
 const router = express.Router();
 const dotenv = require('dotenv');
@@ -59,6 +58,18 @@ const getCallbackRedirectUri = () => {
   }
 };
 
+// var cookieSession = require('cookie-session');
+// app.set('trust proxy', 1);
+// app.use(
+//   cookieSession({
+//     name: '__session',
+//     keys: ['SPOTIFY_BLABLA'],
+//     secure: true,
+//     httpOnly: true,
+//     sameSite: 'none',
+//   })
+// );
+
 passport.serializeUser(function (user, done) {
   done(null, user);
 });
@@ -102,22 +113,22 @@ app.use(cookies());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-const sessionConfig = {
-  secret: 'SPOTIFY_BLABLA',
-  resave: true,
-  saveUninitialized: false,
-  cookie: {
-    sameSite: 'strict', // THIS is the config you are looing for.
-  },
-};
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1); // trust first proxy
-  sessionConfig.cookie.secure = true; // serve secure cookies
-}
-app.use(session(sessionConfig));
+app.use(
+  session({
+    secret: 'SPOTIFY_BLABLA',
+    resave: true,
+    saveUninitialized: false,
+    cookie: {
+      secure: true,
+      sameSite: 'none',
+    },
+  })
+);
+
 app.use(passport.initialize());
 app.use(passport.session());
 
+// enable the "secure" flag on the sessionCookies object
 router.use((req, res, next) => {
   const refreshToken = req.user?.refreshToken;
   const access_token = req.user?.accessToken;
@@ -175,6 +186,7 @@ router.get(
 );
 
 router.get('/getPlaylists', (req, res) => {
+  console.log(req.session.user);
   // res.cookie('daunas', 'ajaj');
   // res.status(400).json({
   //   requser: req.user,
