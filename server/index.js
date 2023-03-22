@@ -98,7 +98,7 @@ app.use(
   })
 );
 
-app.use(cookies('SPOTIFY_BLABLA'));
+app.use(cookies());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -161,6 +161,8 @@ router.get(
   '/callback',
   passport.authenticate('spotify', { failureRedirect: '/login' }),
   (req, res) => {
+    res.cookie('lopas', req.user);
+    res.cookie('duhas', 'hei');
     req.session.user = req.user;
     res.redirect(getCallbackRedirectUri());
   }
@@ -168,9 +170,11 @@ router.get(
 
 router.get('/getPlaylists', (req, res) => {
   if (!req.user) {
+    res.send(req);
+    res.send(req.cookies);
     console.log(req.user);
     console.log(req.session.user);
-    res.status(400).send('loggedOut');
+    // res.status(400).send('loggedOut');
   } else {
     const spotifyApi = new SpotifyWebApi({
       clientId: process.env.CLIENT_ID,
