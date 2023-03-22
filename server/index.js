@@ -112,6 +112,14 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'build')));
+
+  app.get('/*', function (req, res) {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  });
+}
+
 router.use((req, res, next) => {
   const refreshToken = req.user?.refreshToken;
   const access_token = req.user?.accessToken;
@@ -167,16 +175,16 @@ router.get(
 );
 
 router.get('/getPlaylists', (req, res) => {
-  if (!req.session.user) {
+  if (!req.user) {
     console.log(req.user);
     console.log(req.session.user);
-    res.status(401).send('loggedOut');
+    res.status(400).send('loggedOut');
   } else {
     const spotifyApi = new SpotifyWebApi({
       clientId: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
-      accessToken: req.session.user.accessToken,
-      refreshToken: req.session.user.refreshToken,
+      accessToken: req.user.accessToken,
+      refreshToken: req.user.refreshToken,
     });
     spotifyApi
       .getUserPlaylists('21y65ubkr6wutgxvdnj6f333a', {})
