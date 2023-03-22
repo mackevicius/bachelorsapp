@@ -3,30 +3,31 @@ import axios from 'axios';
 import { Context } from './appContext';
 
 export default function useAuth(code: string) {
-  const [accessToken, setAccessToken] = useState();
+  const [accessToken, setAccessToken] = useState<string>();
   const [refreshToken, setRefreshToken] = useState();
   const [expiresIn, setExpiresIn] = useState<number>();
 
   const context = useContext(Context);
 
   useEffect(() => {
-    console.log('TOKENAS', accessToken);
-  }, [accessToken]);
-  useEffect(() => {
     axios
-      .post(`${context.apiUrl}/login`, {
-        code,
-      })
+      .post(
+        `${context.apiUrl}/login`,
+        {
+          code,
+        },
+        {
+          withCredentials: true,
+        }
+      )
       .then((res) => {
-        console.log(res);
-        console.log((res.data.expiresIn - 60) * 1000);
         setAccessToken(res.data.accessToken);
         setRefreshToken(res.data.refreshToken);
         setExpiresIn(res.data.expiresIn);
         window.history.pushState({}, '', '/');
       })
       .catch((err) => {
-        console.log('asdasdasdasdasdasdasdas');
+        console.error(err);
         // window.location = '/' as any;
       });
   }, [code]);

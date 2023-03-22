@@ -19,5 +19,6 @@ module.exports = {
   rules: {
     'react/react-in-jsx-scope': 0,
     'prefer-const': 1,
+    '@typescript-eslint/no-empty-function': 1,
   },
 };

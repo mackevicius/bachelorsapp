@@ -1,0 +1,16 @@
+.trackListC {
+  display: flex;
+  flex-direction: column;
+}
+
+.track {
+  height: 50px;
+  display: flex;
+  column-gap: 5px;
+  border: 1px solid black;
+  justify-content: space-between;
+}
+
+.votingSection {
+  display: flex;
+}

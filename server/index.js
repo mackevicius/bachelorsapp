@@ -5,8 +5,14 @@ const uuidv4 = require('uuid').v4;
 var cors = require('cors');
 var SpotifyWebApi = require('spotify-web-api-node');
 const bodyParser = require('body-parser');
+const cookies = require('cookie-parser');
+const querystring = require('querystring');
+const SpotifyStrategy = require('passport-spotify').Strategy;
+const passport = require('passport');
+const session = require('express-session');
 
 const express = require('express');
+const router = express.Router();
 const dotenv = require('dotenv');
 const { error } = require('console');
 const {
@@ -14,12 +20,13 @@ const {
   createFamilyItem,
   replaceFamilyItem,
   deleteFamilyItem,
+  uploadInfo,
+  validateTracks,
 } = require('./dbIndex');
 
 dotenv.config();
 
 var app = express();
-app.use(cors());
 
 // Spinning the http server and the WebSocket server.
 const server = http.createServer(app);
@@ -36,9 +43,6 @@ const generateRandomString = function (length) {
   return text;
 };
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
 const getRedirectUri = () => {
   if (process.env.NODE_ENV === 'development')
     return process.env.REDIRECT_URI_DEV;
@@ -47,53 +51,196 @@ const getRedirectUri = () => {
   }
 };
 
-app.post('/refresh', (req, res) => {
-  const refreshToken = req.body.refreshToken;
-  const spotifyApi = new SpotifyWebApi({
-    redirectUri: getRedirectUri(),
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    refreshToken,
-  });
-
-  spotifyApi
-    .refreshAccessToken()
-    .then((data) => {
-      res.json({
-        accessToken: data.body.access_token,
-        expiresIn: data.body.expires_in,
-      });
-    })
-    .catch((err) => {
-      console.log(err);
-      res.sendStatus(400);
-    });
+passport.serializeUser(function (user, done) {
+  done(null, user);
+});
+passport.deserializeUser(function (obj, done) {
+  done(null, obj);
 });
 
-app.post('/login', (req, res) => {
-  const code = req.body.code;
-  const spotifyApi = new SpotifyWebApi({
-    redirectUri: getRedirectUri(),
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-  });
+passport.use(
+  new SpotifyStrategy(
+    {
+      clientID: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      callbackURL: getRedirectUri(),
+      passReqToCallback: true,
+    },
+    async (req, accessToken, refreshToken, expires_in, profile, done) => {
+      const user = {
+        accessToken,
+        refreshToken,
+        expires_in,
+        profile,
+      };
 
-  spotifyApi
-    .authorizationCodeGrant(code)
-    .then((data) => {
-      res.json({
-        accessToken: data.body.access_token,
-        refreshToken: data.body.refresh_token,
-        expiresIn: data.body.expires_in,
+      process.nextTick(() => {
+        done(null, user);
       });
-    })
-    .catch((err) => {
-      // console.log(err);
-      if (err.statusCode !== 400) {
-        res.send(err.statusCode);
-      }
+    }
+  )
+);
+app.use(
+  cors({
+    credentials: true,
+    origin: [
+      'http://localhost:3000',
+      'https://gray-forest-0b9a13e03.2.azurestaticapps.net',
+    ],
+  })
+);
+
+app.use(cookies());
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(
+  session({
+    secret: 'SPOTIFY_BLABLA',
+    resave: true,
+    saveUninitialized: false,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.get(
+  '/callback',
+  passport.authenticate('spotify', { failureRedirect: '/login' }),
+  (req, res) => {
+    req.session.user = req.user;
+    res.redirect(process.env.CLIENT_REDIRECT_URL_DEV);
+  }
+);
+
+router.use((req, res, next) => {
+  const refreshToken = req.user?.refreshToken;
+  const access_token = req.user?.accessToken;
+
+  if (refreshToken) {
+    const spotifyApi = new SpotifyWebApi({
+      redirectUri: getRedirectUri(),
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      refreshToken,
     });
+    spotifyApi
+      .refreshAccessToken()
+      .then((data) => {
+        req.user.accessToken = data.body.access_token;
+        req.user.expires_in = data.body.expires_in;
+      })
+      .catch((err) => {
+        console.log(err);
+        res.sendStatus(400);
+      });
+  }
+
+  next();
 });
+
+router.get(
+  '/login',
+  passport.authenticate('spotify', {
+    scope: [
+      'user-read-private',
+      'user-read-email',
+      'user-library-read',
+      'user-library-modify',
+      'user-read-playback-state',
+      'user-modify-playback-state',
+      'playlist-read-private',
+    ],
+    showDialog: true,
+  }),
+  (req, res) => {
+    res.status(200).send(req.user);
+  }
+);
+
+router.get('/getPlaylists', (req, res) => {
+  if (!req.user) {
+    res.status(400).send('loggedOut');
+  } else {
+    const spotifyApi = new SpotifyWebApi({
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      accessToken: req.user.accessToken,
+      refreshToken: req.user.refreshToken,
+    });
+    spotifyApi
+      .getUserPlaylists('21y65ubkr6wutgxvdnj6f333a', {})
+      .then((response) => {
+        res.send(response.body.items);
+      })
+      .catch((err) => {
+        res.send(err);
+      });
+  }
+});
+
+// app.get('/getPlaylistTracks', (req, res) => {
+//   if (!req.user) {
+//     res.status(400).send('loggedOut');
+//   } else {
+//     const spotifyApi = new SpotifyWebApi({
+//       clientId: process.env.CLIENT_ID,
+//       clientSecret: process.env.CLIENT_SECRET,
+//       accessToken: req.user.accessToken,
+//       refreshToken: req.user.refreshToken,
+//     });
+//     spotifyApi
+//       .getPlaylistTracks(req.query.id)
+//       .then((response) => {
+//         res.send(response.body);
+//       })
+//       .catch((err) => {
+//         res.send(err);
+//       });
+//   }
+// });
+router.get('/getPlaylistTracks', (req, res) => {
+  if (!req.user) {
+    res.status(400).send('loggedOut');
+  } else {
+    const spotifyApi = new SpotifyWebApi({
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      accessToken: req.user.accessToken,
+      refreshToken: req.user.refreshToken,
+    });
+    spotifyApi
+      .getPlaylistTracks(req.query.id)
+      .then((response) => {
+        validateTracks(response.body.items, req.query.id)
+          .then((validated) => {
+            res.send(validated);
+          })
+          .catch((err) => {
+            console.log(err);
+            res.send(err);
+          });
+      })
+      .catch((err) => {
+        res.send(err);
+      });
+  }
+});
+
+// router.get('/searchPlaylist',(req,res)=>{
+//   if (!req.user) {
+//     res.status(400).send('loggedOut');
+//   } else {
+//     const spotifyApi = new SpotifyWebApi({
+//       clientId: process.env.CLIENT_ID,
+//       clientSecret: process.env.CLIENT_SECRET,
+//       accessToken: req.user.accessToken,
+//       refreshToken: req.user.refreshToken,
+//     });
+//     spotifyApi
+//       .searchPlaylists(req.query.search)
+//   }
+// })
 
 app.get('/items', (req, res) => {
   queryContainer()
@@ -102,6 +249,24 @@ app.get('/items', (req, res) => {
     })
     .catch((err) => {
       res.sendStatus(400);
+    });
+});
+
+app.get('/getPlaylistTrackInfo', (req, res) => {
+  console.log('show', req.cookies);
+  res.json({
+    hooray: 's',
+  });
+});
+
+app.post('/uploadPlaylistInfo', (req, res) => {
+  // console.log(req.body);
+  uploadInfo('playlists', req.body)
+    .then((res) => {
+      res.json('valio');
+    })
+    .catch((err) => {
+      console.log(err);
     });
 });
 
@@ -134,6 +299,12 @@ app.post('/delete', (req, res) => {
       console.error(err);
       res.send(err.code);
     });
+});
+
+app.get('/kazkas', (req, res) => {
+  console.log('gei');
+  const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=2f260998e40849128281a3758eb04453&response_type=code&redirect_uri=${process.env.REDIRECT_URI_DEV}&scope=streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state`;
+  res.redirect(AUTH_URL);
 });
 
 // I'm maintaining all active connections in this object
@@ -171,7 +342,7 @@ function handleMessage(message, userId) {
     json.data = { users, userActivity };
   } else if (dataFromClient.type === typesDef.CONTENT_CHANGE) {
     editorContent = dataFromClient.content;
-    json.data = { editorContent, userActivity };
+    json.data = { users, editorContent, userActivity };
   }
   broadcastMessage(json);
 }
@@ -195,11 +366,16 @@ wsServer.on('connection', function (connection) {
 
   // Store the new connection and handle messages
   clients[userId] = connection;
-  console.log(connection);
-  console.log(`${userId} connected.`);
-  connection.on('message', (message) => handleMessage(message, userId));
+  // console.log(connection);
+  // console.log(`${userId} connected.`);
+  connection.on('message', (message) => {
+    console.log(JSON.parse(message.toString()));
+    handleMessage(message, userId);
+  });
   // User disconnected
   connection.on('close', () => handleDisconnect(userId));
 });
+
+app.use('/', router);
 
 server.listen(8080);

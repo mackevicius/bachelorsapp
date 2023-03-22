@@ -11,9 +11,7 @@ export default function Dashboard({ code }: { code: string }) {
   });
 
   useEffect(() => {
-    console.log('pasikeite', accessToken);
     if (accessToken) {
-      console.log('valio');
       spotifyApi.setAccessToken(accessToken);
       spotifyApi
         .getArtist('63UnvqBByUasqLkKkGGgmz')
