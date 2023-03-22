@@ -51,6 +51,14 @@ const getRedirectUri = () => {
   }
 };
 
+const getCallbackRedirectUri = () => {
+  if (process.env.NODE_ENV === 'development')
+    return process.env.CALLBACK_REDIRECT_URL_DEV;
+  else {
+    return process.env.CALLBACK_REDIRECT_URL_PROD;
+  }
+};
+
 passport.serializeUser(function (user, done) {
   done(null, user);
 });
@@ -104,15 +112,6 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.get(
-  '/callback',
-  passport.authenticate('spotify', { failureRedirect: '/login' }),
-  (req, res) => {
-    req.session.user = req.user;
-    res.redirect(process.env.CLIENT_REDIRECT_URL_DEV);
-  }
-);
-
 router.use((req, res, next) => {
   const refreshToken = req.user?.refreshToken;
   const access_token = req.user?.accessToken;
@@ -155,6 +154,15 @@ router.get(
   }),
   (req, res) => {
     res.status(200).send(req.user);
+  }
+);
+
+router.get(
+  '/callback',
+  passport.authenticate('spotify', { failureRedirect: '/login' }),
+  (req, res) => {
+    req.session.user = req.user;
+    res.redirect(getCallbackRedirectUri());
   }
 );
 
