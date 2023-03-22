@@ -169,15 +169,15 @@ router.get(
 );
 
 router.get('/getPlaylists', (req, res) => {
-  res.cookie('daunas', 'ajaj');
-  res.status(400).json({
-    requser: req.user,
-    lolsessinas: req.session,
-    reqsessionuser: req.session.user,
-    cookies: req.cookies,
-  });
+  // res.cookie('daunas', 'ajaj');
+  // res.status(400).json({
+  //   requser: req.user,
+  //   lolsessinas: req.session,
+  //   reqsessionuser: req.session.user,
+  //   cookies: req.cookies,
+  // });
   if (!req.user) {
-    // res.status(400).send('loggedOut');
+    res.status(400).send('loggedOut');
   } else {
     const spotifyApi = new SpotifyWebApi({
       clientId: process.env.CLIENT_ID,

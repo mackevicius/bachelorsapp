@@ -23,12 +23,12 @@ export const Home = () => {
   const context = useContext(Context);
 
   useEffect(() => {
-    localStorage.setItem('loggedIn', 'yes');
     axios
       .get(context.apiUrl + '/getPlaylists', { withCredentials: true })
       .then((res) => {
         setPlaylists(res.data);
         setLoading(false);
+        localStorage.setItem('loggedIn', 'yes');
       })
       .catch((err) => {
         if (err.response.data === 'loggedOut') {
