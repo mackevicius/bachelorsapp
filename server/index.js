@@ -102,13 +102,19 @@ app.use(cookies());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(
-  session({
-    secret: 'SPOTIFY_BLABLA',
-    resave: true,
-    saveUninitialized: false,
-  })
-);
+const sessionConfig = {
+  secret: 'SPOTIFY_BLABLA',
+  resave: true,
+  saveUninitialized: false,
+  cookie: {
+    sameSite: 'strict', // THIS is the config you are looing for.
+  },
+};
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1); // trust first proxy
+  sessionConfig.cookie.secure = true; // serve secure cookies
+}
+app.use(session(sessionConfig));
 app.use(passport.initialize());
 app.use(passport.session());
 
