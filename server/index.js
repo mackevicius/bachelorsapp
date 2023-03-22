@@ -119,7 +119,7 @@ const sessionConfig = {
   resave: true,
   saveUninitialized: false,
   cookie: {
-    sameSite: 'none',
+    sameSite: process.env.NODE_ENV === 'production' && 'none',
   },
 };
 if (process.env.NODE_ENV === 'production') {
