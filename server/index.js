@@ -169,6 +169,7 @@ router.get(
 );
 
 router.get('/getPlaylists', (req, res) => {
+  res.cookie('daunas', 'ajaj');
   res.status(400).json({
     requser: req.user,
     lolsessinas: req.session,
