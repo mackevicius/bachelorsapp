@@ -169,11 +169,13 @@ router.get(
 );
 
 router.get('/getPlaylists', (req, res) => {
+  res.status(400).json({
+    requser: req.user,
+    lolsessinas: req.session,
+    reqsessionuser: req.session.user,
+    cookies: req.cookies,
+  });
   if (!req.user) {
-    res.send(req);
-    res.send(req.cookies);
-    console.log(req.user);
-    console.log(req.session.user);
     // res.status(400).send('loggedOut');
   } else {
     const spotifyApi = new SpotifyWebApi({
