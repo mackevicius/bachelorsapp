@@ -124,7 +124,7 @@ const sessionConfig = {
     // path: '/',
     // sameSite: 'lax',
 
-    // httpOnly: true,
+    httpOnly: true,
   },
 };
 if (process.env.NODE_ENV === 'production') {
