@@ -99,18 +99,19 @@ app.use(cookies());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1); // trust first proxy
+}
+
 const sessionConfig = {
   secret: 'SPOTIFY_BLABLA',
   resave: true,
   saveUninitialized: false,
   cookie: {
-    sameSite: process.env.NODE_ENV === 'production' && 'none',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // must be 'none' to enable cross-site delivery
+    secure: process.env.NODE_ENV === 'production', // must be true if sameSite='none'
   },
 };
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1); // trust first proxy
-  sessionConfig.cookie.secure = true; // serve secure cookies
-}
 
 app.use(session(sessionConfig));
 
