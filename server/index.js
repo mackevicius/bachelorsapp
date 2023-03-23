@@ -58,18 +58,6 @@ const getCallbackRedirectUri = () => {
   }
 };
 
-// var cookieSession = require('cookie-session');
-// app.set('trust proxy', 1);
-// app.use(
-//   cookieSession({
-//     name: '__session',
-//     keys: ['SPOTIFY_BLABLA'],
-//     secure: true,
-//     httpOnly: true,
-//     sameSite: 'none',
-//   })
-// );
-
 passport.serializeUser(function (user, done) {
   done(null, user);
 });
@@ -102,10 +90,7 @@ passport.use(
 app.use(
   cors({
     credentials: true,
-    origin: [
-      'http://localhost:3000',
-      'https://gray-forest-0b9a13e03.2.azurestaticapps.net',
-    ],
+    origin: getCallbackRedirectUri(),
   })
 );
 
