@@ -120,8 +120,11 @@ const sessionConfig = {
   saveUninitialized: false,
   cookie: {
     sameSite: process.env.NODE_ENV === 'production' && 'none',
+    // domain: 'localhost',
+    // path: '/',
+    // sameSite: 'lax',
 
-    httpOnly: true,
+    // httpOnly: true,
   },
 };
 if (process.env.NODE_ENV === 'production') {
