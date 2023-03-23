@@ -119,19 +119,12 @@ const sessionConfig = {
   resave: true,
   saveUninitialized: false,
   cookie: {
-    domain:
-      process.env.NODE_ENV === 'development'
-        ? 'localhost'
-        : 'playlist-app-spotify.azurewebsites.net',
-    path: '/',
-    sameSite: 'lax',
-
-    httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' && 'none',
   },
 };
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1); // trust first proxy
-  sessionConfig.cookie.secure = true; // serve secure cookies
+  // sessionConfig.cookie.secure = true; // serve secure cookies
 }
 
 app.use(session(sessionConfig));
