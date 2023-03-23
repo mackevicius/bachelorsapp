@@ -120,11 +120,8 @@ const sessionConfig = {
   saveUninitialized: false,
   cookie: {
     sameSite: process.env.NODE_ENV === 'production' && 'none',
-    domain:
-      process.env.NODE_ENV === 'development'
-        ? 'localhost'
-        : '.playlist-app-spotify.azurewebsites.net',
-    // httpOnly: true,
+
+    httpOnly: true,
   },
 };
 if (process.env.NODE_ENV === 'production') {
