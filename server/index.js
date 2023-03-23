@@ -123,7 +123,7 @@ const sessionConfig = {
     domain:
       process.env.NODE_ENV === 'development'
         ? 'localhost'
-        : 'https://gray-forest-0b9a13e03.2.azurestaticapps.net',
+        : 'https://playlist-app-spotify.azurewebsites.net',
   },
 };
 if (process.env.NODE_ENV === 'production') {
