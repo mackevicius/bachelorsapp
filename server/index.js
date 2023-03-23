@@ -119,10 +119,12 @@ const sessionConfig = {
   resave: true,
   saveUninitialized: false,
   cookie: {
-    sameSite: process.env.NODE_ENV === 'production' && 'none',
-    // domain: 'localhost',
-    // path: '/',
-    // sameSite: 'lax',
+    domain:
+      process.env.NODE_ENV === 'development'
+        ? 'localhost'
+        : 'playlist-app-spotify.azurewebsites.net',
+    path: '/',
+    sameSite: 'lax',
 
     httpOnly: true,
   },
