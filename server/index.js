@@ -417,7 +417,7 @@ wsServer.on('connection', function (connection, req) {
   // Generate a unique code for every user
   const userId = uuidv4();
   console.log('Recieved a new connection');
-  const userID = req.headers.cookie.match(/userId=(.*?);/)[1];
+  const userID = req.headers.cookie?.match(/userId=(.*?);/)[1];
   // Store the new connection and handle messages
   clients[userId] = connection;
   // console.log(connection);
