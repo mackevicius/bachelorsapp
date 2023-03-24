@@ -22,6 +22,8 @@ const App2 = () => {
   // const accessToken = useAuth(code);
   const { apiUrl, socketUrl } = useContext(Context);
 
+  console.log('NAUJAUSIAS');
+
   const socket = useWebSocket(socketUrl, {
     onOpen: (event) => {
       console.log('WebSocket connection established.');
