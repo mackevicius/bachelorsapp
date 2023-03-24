@@ -92,7 +92,6 @@ passport.use(
 app.use(
   cors({
     credentials: true,
-    origin: getCallbackRedirectUri(),
   })
 );
 
