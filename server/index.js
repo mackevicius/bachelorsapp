@@ -92,7 +92,12 @@ passport.use(
 app.use(
   cors({
     credentials: true,
-    origin: true,
+    origin: [
+      'http://localhost:3000',
+      'https://www.spotifyplaylistvotingapp.xyz',
+      'https://spotifyplaylistvotingapp.xyz',
+      'https://api.spotifyplaylistvotingapp.xyz',
+    ],
   })
 );
 
@@ -414,13 +419,18 @@ wsServer.on('connection', function (connection, req) {
   // Generate a unique code for every user
   const userId = uuidv4();
   console.log('Recieved a new connection');
-  const userID = req.headers.cookie?.match(/userId=(.*?);/)[1];
+
   // Store the new connection and handle messages
   clients[userId] = connection;
   // console.log(connection);
   // console.log(`${userId} connected.`);
   connection.on('message', (message) => {
-    console.log(req.session);
+    console.log(req.headers.cookie);
+    const userID = req.headers.cookie
+      ?.slice(req.headers.cookie?.indexOf('userId=') + 7)
+      .split(';')[0];
+
+    console.log('adsadasdasd', userID);
     const newMessage = JSON.parse(message.toString());
     if ((newMessage.type = 'contentchange')) {
       postVote(newMessage.content, userID)
