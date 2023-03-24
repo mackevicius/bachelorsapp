@@ -107,12 +107,6 @@ async function createFamilyItem(itemBody) {
     .items.create(itemBody);
 }
 
-async function addTrack(itemBody) {
-  await client
-    .database(databaseId)
-    .container(containerId)
-    .items.create(itemBody);
-}
 /**
  * Query the container using SQL
  */
@@ -148,7 +142,6 @@ async function queryContainer() {
  */
 async function replaceFamilyItem(itemBody) {
   console.log(`Replacing item:\n${itemBody.id}\n`);
-  console.log(itemBody.partitionKey);
   // Change property 'grade'
   itemBody.children = 'duh';
   const { item } = await client
@@ -183,6 +176,66 @@ async function uploadInfo(containerId, itemBody) {
     .replace(newBody);
 }
 
+async function postVote(itemBody, userID) {
+  const { resources: results } = await client
+    .database(databaseId)
+    .container(containerId)
+    .items.query(`SELECT * from c where c.id="${itemBody.playlistId}"`)
+    .fetchAll();
+
+  const playlist = results[0];
+  const index = playlist.tracks.findIndex(
+    (x) => x.trackId === itemBody.trackId
+  );
+  playlist.tracks[index].votes += Number(itemBody.points);
+
+  playlist.votes.push({
+    userId: userID,
+    trackId: itemBody.trackId,
+    points: itemBody.points,
+  });
+
+  const { item } = await client
+    .database(databaseId)
+    .container(containerId)
+    .item(itemBody.playlistId)
+    .replace(playlist);
+  // playlist[index].votes += itemBody.points;
+  // playlist.votes=[...playlist.votes,{
+
+  // }]
+}
+
+async function getUserVotes(userId, playlistId) {
+  const { resources: results } = await client
+    .database(databaseId)
+    .container(containerId)
+    .items.query(`SELECT * from c where c.id="${playlistId}"`)
+    .fetchAll();
+  let votes = ['5', '4', '3', '2', '1'];
+
+  const playlist = results[0];
+  if (playlist) {
+    playlist.votes.map((vote) => {
+      if (vote.userId === userId) {
+        votes = votes.filter((x) => x !== vote.points);
+      }
+    });
+  }
+
+  return JSON.stringify(votes);
+}
+
+async function updateTracks(newPlaylist, playlistId) {
+  const { resource } = await client
+    .database(databaseId)
+    .container(containerId)
+    .item(playlistId)
+    .replace(newPlaylist);
+
+  return resource;
+}
+
 async function validateTracks(tracks, playlistId) {
   const { resources: results } = await client
     .database(databaseId)
@@ -190,35 +243,56 @@ async function validateTracks(tracks, playlistId) {
     .items.query(`SELECT * from c where c.id="${playlistId}"`)
     .fetchAll();
   const trackArray = [];
-
+  let updatedArray = [];
   if (results[0]) {
     const dbTracks = results[0].tracks;
-    let newTracks = 0;
+    const dbVotes = results[0].votes;
     tracks.forEach((spotifyTrack, index) => {
       let votes = 0;
       const match = dbTracks.find((databaseTrack) => {
-        return databaseTrack.trackId === spotifyTrack.track.id;
+        return spotifyTrack.track.id === databaseTrack.trackId;
       });
-      if (!match) {
-        addTrack({
-          id: spotifyTrack.id,
-          votes: votes,
-        })
-          .then(() => {
-            newTracks++;
-          })
-          .catch((err) => console.log(err));
-      } else {
+      if (match) {
         votes = match.votes;
-        trackArray[index] = spotifyTrack;
-        trackArray[index].votes = votes;
+        trackArray[index] = {
+          trackId: spotifyTrack.track.id,
+          votes,
+        };
+      } else {
+        trackArray[index] = {
+          trackId: spotifyTrack.track.id,
+          votes: 0,
+        };
       }
     });
-    if (newTracks !== 0) {
-      throw new Error('tracksMismatch');
-    } else {
-      return JSON.stringify(trackArray);
+
+    const newVotes = dbVotes.filter((vote) => {
+      return !!trackArray.find((track) => track.trackId === vote.trackId);
+    });
+
+    const newPlaylist = {
+      ...results[0],
+      tracks: trackArray,
+      votes: newVotes,
+    };
+
+    const labas = await updateTracks(newPlaylist, playlistId);
+
+    const { resources: newResults } = await client
+      .database(databaseId)
+      .container(containerId)
+      .items.query(`SELECT * from c where c.id="${playlistId}"`)
+      .fetchAll();
+    if (newResults) {
+      updatedArray = newResults[0].tracks.map((x, index) => {
+        return {
+          ...tracks[index],
+          votes: x.votes,
+        };
+      });
     }
+
+    return JSON.stringify(updatedArray);
   } else {
     const newItem = {
       id: playlistId,
@@ -228,6 +302,7 @@ async function validateTracks(tracks, playlistId) {
           votes: 0,
         };
       }),
+      votes: [],
     };
     tracks.map((x, index) => {
       trackArray[index] = x;
@@ -271,4 +346,6 @@ module.exports = {
   deleteFamilyItem,
   uploadInfo,
   validateTracks,
+  postVote,
+  getUserVotes,
 };

@@ -21,6 +21,8 @@ const {
   deleteFamilyItem,
   uploadInfo,
   validateTracks,
+  postVote,
+  getUserVotes,
 } = require('./dbIndex');
 
 dotenv.config();
@@ -168,6 +170,10 @@ router.get(
   '/callback',
   passport.authenticate('spotify', { failureRedirect: '/login' }),
   (req, res) => {
+    wsServer.on('headers', function (headers) {
+      headers.push('Set-Cookie: ' + 'userId=' + req.user.profile.id);
+      console.log('handshake response cookie', headers['set-cookie']);
+    });
     res.cookie('lopas', req.user);
     res.cookie('duhas', 'hei', { secure: true, sameSite: 'none' });
     req.session.user = req.user;
@@ -176,7 +182,6 @@ router.get(
 );
 
 router.get('/getPlaylists', (req, res) => {
-  console.log(req.session.user);
   // res.cookie('daunas', 'ajaj');
   // res.status(400).json({
   //   requser: req.user,
@@ -203,6 +208,8 @@ router.get('/getPlaylists', (req, res) => {
       });
   }
 });
+
+router.post('/postVote', (req, res) => {});
 
 // app.get('/getPlaylistTracks', (req, res) => {
 //   if (!req.user) {
@@ -242,13 +249,22 @@ router.get('/getPlaylistTracks', (req, res) => {
             res.send(validated);
           })
           .catch((err) => {
-            console.log(err);
-            res.send(err);
+            res.status(400).send('dbError');
           });
       })
       .catch((err) => {
         res.send(err);
       });
+  }
+});
+
+router.get('/getUserVotes', (req, res) => {
+  if (!req.user) {
+    res.status(400).send('loggedOut');
+  } else {
+    getUserVotes(req.user.profile.id, req.query.id).then((response) => {
+      res.send(response);
+    });
   }
 });
 
@@ -357,6 +373,15 @@ function broadcastMessage(json) {
     }
   }
 }
+function sendErrorMessage(userId, err) {
+  let client = clients[userId];
+  client.send(
+    JSON.stringify({
+      type: 'error',
+      err,
+    })
+  );
+}
 
 function handleMessage(message, userId) {
   const dataFromClient = JSON.parse(message.toString());
@@ -384,18 +409,28 @@ function handleDisconnect(userId) {
 }
 
 // A new client connection request received
-wsServer.on('connection', function (connection) {
+
+wsServer.on('connection', function (connection, req) {
   // Generate a unique code for every user
   const userId = uuidv4();
   console.log('Recieved a new connection');
-
+  const userID = req.headers.cookie.match(/userId=(.*?);/)[1];
   // Store the new connection and handle messages
   clients[userId] = connection;
   // console.log(connection);
   // console.log(`${userId} connected.`);
   connection.on('message', (message) => {
-    console.log(JSON.parse(message.toString()));
-    handleMessage(message, userId);
+    console.log(req.session);
+    const newMessage = JSON.parse(message.toString());
+    if ((newMessage.type = 'contentchange')) {
+      postVote(newMessage.content, userID)
+        .then(() => {
+          handleMessage(message, userId);
+        })
+        .catch((err) => {
+          sendErrorMessage(userId, err.message);
+        });
+    }
   });
   // User disconnected
   connection.on('close', () => handleDisconnect(userId));

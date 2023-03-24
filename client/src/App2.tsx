@@ -7,6 +7,16 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { PlaylistPage } from './PlaylistPage/PlaylistPage';
 import { useWebSocket } from 'react-use-websocket/dist/lib/use-websocket';
 
+function isDocumentEvent(message: any) {
+  const evt = JSON.parse(message.data);
+  return evt.type === 'contentchange' || evt.type === 'error';
+}
+
+export interface Vote {
+  trackId: string;
+  userId: string;
+  points: number;
+}
 const App2 = () => {
   // const value = Object.assign({ ...defaultValue, code });
   // const accessToken = useAuth(code);
@@ -17,22 +27,25 @@ const App2 = () => {
       console.log('WebSocket connection established.');
     },
     share: true,
-    filter: () => false,
+    filter: isDocumentEvent,
     retryOnError: true,
     shouldReconnect: () => true,
     onMessage(event) {
-      console.log(JSON.parse(event?.data));
+      // console.log(event);
     },
   });
 
-  const handleSendMessage = (userId: string, trackId: string, vote: string) => {
+  const handleSendMessage = (
+    playlistId: string,
+    trackId: string,
+    points: string
+  ) => {
     socket.sendJsonMessage({
       type: 'contentchange',
       content: {
-        userId: 'povilas',
-        playlistId: 'adsas',
-        trackId: 'asda',
-        vote: '2',
+        playlistId,
+        trackId,
+        points,
       },
     });
   };
@@ -44,7 +57,9 @@ const App2 = () => {
         <Route path="/login" element={<Login />} />
         <Route
           path="/playlist/:id"
-          element={<PlaylistPage onMessageSend={handleSendMessage} />}
+          element={
+            <PlaylistPage socket={socket} onMessageSend={handleSendMessage} />
+          }
         />
       </Routes>
     </Context.Provider>
