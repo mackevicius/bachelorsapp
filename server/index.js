@@ -430,7 +430,6 @@ wsServer.on('connection', function (connection, req) {
       ?.slice(req.headers.cookie?.indexOf('userId=') + 7)
       .split(';')[0];
 
-    console.log('adsadasdasd', userID);
     const newMessage = JSON.parse(message.toString());
     if ((newMessage.type = 'contentchange')) {
       postVote(newMessage.content, userID)
