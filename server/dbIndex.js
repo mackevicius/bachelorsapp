@@ -176,7 +176,7 @@ async function uploadInfo(containerId, itemBody) {
     .replace(newBody);
 }
 
-async function postVote(itemBody, userID) {
+async function postVote(itemBody) {
   const { resources: results } = await client
     .database(databaseId)
     .container(containerId)
@@ -190,7 +190,7 @@ async function postVote(itemBody, userID) {
   playlist.tracks[index].votes += Number(itemBody.points);
 
   playlist.votes.push({
-    userId: userID,
+    userId: itemBody.userId,
     trackId: itemBody.trackId,
     points: itemBody.points,
   });

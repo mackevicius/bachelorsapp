@@ -1,11 +1,12 @@
 import App from './App';
 import Login from './Login';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Context, defaultValue } from './appContext';
 import { Home } from './Homepage/Home';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { PlaylistPage } from './PlaylistPage/PlaylistPage';
 import { useWebSocket } from 'react-use-websocket/dist/lib/use-websocket';
+import axios from 'axios';
 
 function isDocumentEvent(message: any) {
   const evt = JSON.parse(message.data);
@@ -21,6 +22,7 @@ const App2 = () => {
   // const value = Object.assign({ ...defaultValue, code });
   // const accessToken = useAuth(code);
   const { apiUrl, socketUrl } = useContext(Context);
+  const navigate = useNavigate();
 
   console.log('NAUJAUSIAS');
 
@@ -48,9 +50,23 @@ const App2 = () => {
         playlistId,
         trackId,
         points,
+        userId: localStorage.getItem('userId'),
       },
     });
   };
+
+  useEffect(() => {
+    if (!localStorage.getItem('userId')) {
+      axios
+        .get(apiUrl + '/getUserId', { withCredentials: true })
+        .then((res) => {
+          localStorage.setItem('userId', res.data);
+        })
+        .catch((err) => {
+          navigate('/login');
+        });
+    }
+  }, []);
 
   return (
     <Context.Provider value={defaultValue}>

@@ -126,7 +126,6 @@ app.use(session(sessionConfig));
 app.use(passport.initialize());
 app.use(passport.session());
 
-// enable the "secure" flag on the sessionCookies object
 router.use((req, res, next) => {
   const refreshToken = req.user?.refreshToken;
   const access_token = req.user?.accessToken;
@@ -186,6 +185,13 @@ router.get(
     res.redirect(getCallbackRedirectUri());
   }
 );
+
+router.get('/getUserId', (req, res) => {
+  if (req.user) {
+    res.json(req.user.profile.id);
+  }
+  res.status(401).send('loggedOut');
+});
 
 router.get('/getPlaylists', (req, res) => {
   // res.cookie('daunas', 'ajaj');
@@ -247,6 +253,7 @@ router.get('/getPlaylistTracks', (req, res) => {
       accessToken: req.user.accessToken,
       refreshToken: req.user.refreshToken,
     });
+
     spotifyApi
       .getPlaylistTracks(req.query.id)
       .then((response) => {
@@ -420,20 +427,16 @@ wsServer.on('connection', function (connection, req) {
   // Generate a unique code for every user
   const userId = uuidv4();
   console.log('Recieved a new connection');
-
   // Store the new connection and handle messages
   clients[userId] = connection;
   // console.log(connection);
   // console.log(`${userId} connected.`);
   connection.on('message', (message) => {
     console.log(req.headers.cookie);
-    const userID = req.headers.cookie
-      ?.slice(req.headers.cookie?.indexOf('userId=') + 7)
-      .split(';')[0];
 
     const newMessage = JSON.parse(message.toString());
     if ((newMessage.type = 'contentchange')) {
-      postVote(newMessage.content, userID)
+      postVote(newMessage.content)
         .then(() => {
           handleMessage(message, userId);
         })
