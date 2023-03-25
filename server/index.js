@@ -96,7 +96,14 @@ app.use(
     origin: [
       'http://localhost:3000',
       'https://www.spotifyplaylistvotingapp.xyz',
+      'https://www.spotifyplaylistvotingapp.xyz/',
+      'www.spotifyplaylistvotingapp.xyz/',
+      'www.spotifyplaylistvotingapp.xyz',
+      'https://www.spotifyplaylistvotingapp.xyz',
+      'https://www.spotifyplaylistvotingapp.xyz/',
       'https://spotifyplaylistvotingapp.xyz',
+      'spotifyplaylistvotingapp.xyz/',
+      'spotifyplaylistvotingapp.xyz',
       'https://api.spotifyplaylistvotingapp.xyz',
     ],
   })
@@ -190,7 +197,7 @@ router.get('/getUserId', (req, res) => {
   if (req.user) {
     res.json(req.user.profile.id);
   }
-  res.status(401).send('loggedOut');
+  res.status(500).send('loggedOut');
 });
 
 router.get('/getPlaylists', (req, res) => {
@@ -295,71 +302,6 @@ router.get('/getUserVotes', (req, res) => {
 //       .searchPlaylists(req.query.search)
 //   }
 // })
-
-app.get('/items', (req, res) => {
-  queryContainer()
-    .then((result) => {
-      res.send(result);
-    })
-    .catch((err) => {
-      res.sendStatus(400);
-    });
-});
-
-app.get('/getPlaylistTrackInfo', (req, res) => {
-  console.log('show', req.cookies);
-  res.json({
-    hooray: 's',
-  });
-});
-
-app.post('/uploadPlaylistInfo', (req, res) => {
-  // console.log(req.body);
-  uploadInfo('playlists', req.body)
-    .then((res) => {
-      res.json('valio');
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-});
-
-app.post('/add', (req, res) => {
-  createFamilyItem(req.body)
-    .then((res) => {
-      res.send(true);
-    })
-    .catch((err) => {
-      res.send(err);
-    });
-});
-
-app.post('/update', (req, res) => {
-  replaceFamilyItem(req.body)
-    .then((res) => {
-      res.send(true);
-    })
-    .catch((err) => {
-      res.send(err);
-    });
-});
-
-app.post('/delete', (req, res) => {
-  deleteFamilyItem(req.body)
-    .then((res) => {
-      res.send(true);
-    })
-    .catch((err) => {
-      console.error(err);
-      res.send(err.code);
-    });
-});
-
-app.get('/kazkas', (req, res) => {
-  console.log('gei');
-  const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=2f260998e40849128281a3758eb04453&response_type=code&redirect_uri=${process.env.REDIRECT_URI_DEV}&scope=streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state`;
-  res.redirect(AUTH_URL);
-});
 
 // I'm maintaining all active connections in this object
 const clients = {};
