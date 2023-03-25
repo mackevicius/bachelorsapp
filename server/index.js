@@ -93,19 +93,7 @@ passport.use(
 app.use(
   cors({
     credentials: true,
-    origin: [
-      'http://localhost:3000',
-      'https://www.spotifyplaylistvotingapp.xyz',
-      'https://www.spotifyplaylistvotingapp.xyz/',
-      'www.spotifyplaylistvotingapp.xyz/',
-      'www.spotifyplaylistvotingapp.xyz',
-      'https://www.spotifyplaylistvotingapp.xyz',
-      'https://www.spotifyplaylistvotingapp.xyz/',
-      'https://spotifyplaylistvotingapp.xyz',
-      'spotifyplaylistvotingapp.xyz/',
-      'spotifyplaylistvotingapp.xyz',
-      'https://api.spotifyplaylistvotingapp.xyz',
-    ],
+    origin: ['http://localhost:3000'],
   })
 );
 
