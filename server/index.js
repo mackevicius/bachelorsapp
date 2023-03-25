@@ -90,6 +90,7 @@ passport.use(
     }
   )
 );
+
 app.use(
   cors({
     credentials: true,
@@ -120,6 +121,8 @@ app.use(session(sessionConfig));
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+router.use(cors());
 
 router.use((req, res, next) => {
   const refreshToken = req.user?.refreshToken;
