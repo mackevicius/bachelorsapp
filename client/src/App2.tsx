@@ -24,8 +24,6 @@ const App2 = () => {
   const { apiUrl, socketUrl } = useContext(Context);
   const navigate = useNavigate();
 
-  console.log('NAUJAUSIAS');
-
   const socket = useWebSocket(socketUrl, {
     onOpen: (event) => {
       console.log('WebSocket connection established.');
@@ -42,7 +40,7 @@ const App2 = () => {
   const handleSendMessage = (
     playlistId: string,
     trackId: string,
-    points: string
+    points: number
   ) => {
     socket.sendJsonMessage({
       type: 'contentchange',

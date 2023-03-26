@@ -187,19 +187,32 @@ async function postVote(itemBody) {
   const index = playlist.tracks.findIndex(
     (x) => x.trackId === itemBody.trackId
   );
-  playlist.tracks[index].votes += Number(itemBody.points);
+  if (itemBody.points === 0) {
+    console.log('yeah');
+    const vote = playlist.votes.find(
+      (x) => x.userId === itemBody.userId && x.trackId === itemBody.trackId
+    );
+    console.log('vote', vote);
+    playlist.tracks[index].votes -= vote.points;
+    playlist.votes = playlist.votes.filter(
+      (x) => !(x.userId === itemBody.userId && x.points === vote.points)
+    );
+    // console.log(playlist.votes);
+  } else {
+    playlist.tracks[index].votes += Number(itemBody.points);
 
-  playlist.votes.push({
-    userId: itemBody.userId,
-    trackId: itemBody.trackId,
-    points: itemBody.points,
-  });
-
+    playlist.votes.push({
+      userId: itemBody.userId,
+      trackId: itemBody.trackId,
+      points: itemBody.points,
+    });
+  }
   const { item } = await client
     .database(databaseId)
     .container(containerId)
     .item(itemBody.playlistId)
     .replace(playlist);
+
   // playlist[index].votes += itemBody.points;
   // playlist.votes=[...playlist.votes,{
 
@@ -222,8 +235,25 @@ async function getUserVotes(userId, playlistId) {
       }
     });
   }
+  const userVotes = playlist.votes.filter((x) => x.userId == userId);
 
-  return JSON.stringify(votes);
+  let newVotes = [];
+  for (let i = 1; i <= 5; i++) {
+    const match = userVotes.find((vote) => Number(vote.points) === i);
+    if (match) {
+      newVotes.push({
+        trackId: match.trackId,
+        points: match.points,
+      });
+    } else {
+      newVotes.push({
+        trackId: null,
+        points: i,
+      });
+    }
+  }
+
+  return JSON.stringify(newVotes);
 }
 
 async function updateTracks(newPlaylist, playlistId) {
@@ -255,11 +285,13 @@ async function validateTracks(tracks, playlistId) {
       if (match) {
         votes = match.votes;
         trackArray[index] = {
+          place: index,
           trackId: spotifyTrack.track.id,
           votes,
         };
       } else {
         trackArray[index] = {
+          place: index,
           trackId: spotifyTrack.track.id,
           votes: 0,
         };
@@ -287,6 +319,7 @@ async function validateTracks(tracks, playlistId) {
       updatedArray = newResults[0].tracks.map((x, index) => {
         return {
           ...tracks[index],
+          place: x.place,
           votes: x.votes,
         };
       });
@@ -296,8 +329,9 @@ async function validateTracks(tracks, playlistId) {
   } else {
     const newItem = {
       id: playlistId,
-      tracks: tracks.map((x) => {
+      tracks: tracks.map((x, index) => {
         return {
+          place: index,
           trackId: x.track.id,
           votes: 0,
         };
@@ -306,6 +340,7 @@ async function validateTracks(tracks, playlistId) {
     };
     tracks.map((x, index) => {
       trackArray[index] = x;
+      trackArray[index].place = index;
       trackArray[index].votes = 0;
     });
     const { resource } = await client

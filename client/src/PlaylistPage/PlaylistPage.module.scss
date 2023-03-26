@@ -1,16 +1,22 @@
-.trackListC {
+.trackList {
   display: flex;
   flex-direction: column;
 }
 
 .track {
-  height: 50px;
+  height: 70px;
+  margin: 10px 0;
   display: flex;
   column-gap: 5px;
   border: 1px solid black;
+  background-color: lightblue;
   justify-content: space-between;
 }
 
 .votingSection {
   display: flex;
+}
+
+.playlistPageContainer {
+  padding: 20px;
 }
