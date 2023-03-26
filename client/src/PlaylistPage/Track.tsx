@@ -13,6 +13,14 @@ interface Props {
 }
 export const TrackTile: React.FC<Props> = forwardRef(
   (props: Props, ref: React.ForwardedRef<any>) => {
+    const getUnvotePoints = (trackId: string): number => {
+      const match = props.userVotes.find(
+        (vote: any) => vote?.trackId === trackId
+      );
+      if (match) {
+        return match.points * -1;
+      } else return 0;
+    };
     return (
       <div ref={ref} key={props.track.track?.id} className={styles.track}>
         <div>
@@ -42,7 +50,7 @@ export const TrackTile: React.FC<Props> = forwardRef(
                   props.onMessageSend(
                     props.playlistId || '',
                     props.track?.track?.id || 's',
-                    0
+                    getUnvotePoints(props.track.track?.id as string)
                   )
                 }
               >

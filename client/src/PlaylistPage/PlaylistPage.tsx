@@ -37,7 +37,7 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
     } else {
       const vote = (socket.lastJsonMessage as any)?.data.editorContent as Vote;
 
-      if (vote?.points !== 0) {
+      if (vote?.points >= 0) {
         const newTracks = tracks.map((x) => {
           if (x.track?.id === vote.trackId) {
             x.votes += vote.points;
@@ -46,7 +46,10 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
         });
         newTracks.sort((a, b) => b.votes - a.votes || a.place - b.place);
         const newUserVotes = userVotes.map((x) => {
-          if (x.points === vote.points) {
+          if (
+            x.points === vote.points &&
+            vote.userId === localStorage.getItem('userId')
+          ) {
             return {
               trackId: vote.trackId,
               points: vote.points,
@@ -60,13 +63,16 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
         const match = userVotes.find((x) => x.trackId === vote.trackId) as Vote;
         const newTracks = tracks.map((x) => {
           if (x.track?.id === vote.trackId) {
-            x.votes -= match.points;
+            match ? (x.votes -= match.points) : (x.votes += vote.points);
           }
           return x;
         });
         newTracks.sort((a, b) => b.votes - a.votes || a.place - b.place);
         const newUserVotes = userVotes.map((x) => {
-          if (x.trackId === vote.trackId) {
+          if (
+            x.trackId === vote.trackId &&
+            vote.userId === localStorage.getItem('userId')
+          ) {
             return {
               trackId: null,
               points: x.points,

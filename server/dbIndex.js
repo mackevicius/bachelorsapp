@@ -187,12 +187,10 @@ async function postVote(itemBody) {
   const index = playlist.tracks.findIndex(
     (x) => x.trackId === itemBody.trackId
   );
-  if (itemBody.points === 0) {
-    console.log('yeah');
+  if (itemBody.points <= 0) {
     const vote = playlist.votes.find(
       (x) => x.userId === itemBody.userId && x.trackId === itemBody.trackId
     );
-    console.log('vote', vote);
     playlist.tracks[index].votes -= vote.points;
     playlist.votes = playlist.votes.filter(
       (x) => !(x.userId === itemBody.userId && x.points === vote.points)
