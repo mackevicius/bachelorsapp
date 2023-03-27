@@ -2,7 +2,6 @@
 const CosmosClient = require('@azure/cosmos').CosmosClient;
 
 const config = require('./dbConfig');
-const url = require('url');
 
 const endpoint = config.endpoint;
 
@@ -10,9 +9,8 @@ const key = config.key;
 
 const databaseId = 'Playlists';
 
-const containerId = 'playlists';
-
-const partitionKey = { kind: 'Hash', paths: ['/partitionKey'] };
+const playlistsContainer = 'playlists';
+const votesContainer = 'votes';
 
 const options = {
   endpoint: endpoint,
@@ -22,131 +20,12 @@ const options = {
 
 const client = new CosmosClient(options);
 
-/**
- * Create the database if it does not exist
- */
-// export async function createDatabase() {
-//   const { database } = await client.databases.createIfNotExists({
-//     id: databaseId,
-//   });
-//   console.log(`Created database:\n${database.id}\n`);
-// }
-
-/**
- * Read the database definition
- */
-// async function readDatabase() {
-//   const { resource: databaseDefinition } = await client
-//     .database(databaseId)
-//     .read();
-//   console.log(`Reading database:\n${databaseDefinition.id}\n`);
-// }
-
-/**
- * Create the container if it does not exist
- */
-// async function createContainer() {
-//   const { container } = await client
-//     .database(databaseId)
-//     .containers.createIfNotExists({ id: containerId, partitionKey });
-//   console.log(`Created container:\n${config.container.id}\n`);
-// }
-
-/**
- * Read the container definition
- */
-// async function readContainer() {
-//   const { resource: containerDefinition } = await client
-//     .database(databaseId)
-//     .container(containerId)
-//     .read();
-//   console.log(`Reading container:\n${containerDefinition.id}\n`);
-// }
-
-/**
- * Scale a container
- * You can scale the throughput (RU/s) of your container up and down to meet the needs of the workload. Learn more: https://aka.ms/cosmos-request-units
- */
-// async function scaleContainer() {
-//   const { resource: containerDefinition } = await client
-//     .database(databaseId)
-//     .container(containerId)
-//     .read();
-
-//   try {
-//     const { resources: offers } = await client.offers.readAll().fetchAll();
-
-//     const newRups = 500;
-//     for (var offer of offers) {
-//       if (containerDefinition._rid !== offer.offerResourceId) {
-//         continue;
-//       }
-//       offer.content.offerThroughput = newRups;
-//       const offerToReplace = client.offer(offer.id);
-//       await offerToReplace.replace(offer);
-//       console.log(`Updated offer to ${newRups} RU/s\n`);
-//       break;
-//     }
-//   } catch (err) {
-//     if (err.code == 400) {
-//       console.log(`Cannot read container throuthput.\n`);
-//       console.log(err.body.message);
-//     } else {
-//       throw err;
-//     }
-//   }
-// }
-
-/**
- * Create family item if it does not exist
- */
-async function createFamilyItem(itemBody) {
-  const { item } = await client
-    .database(databaseId)
-    .container(containerId)
-    .items.create(itemBody);
-}
-
-/**
- * Query the container using SQL
- */
-async function queryContainer() {
-  // query to return all children in a family
-  // Including the partition key value of country in the WHERE filter results in a more efficient query
-  const querySpec = {
-    query:
-      'SELECT VALUE r.children FROM root r WHERE r.partitionKey = @country',
-    parameters: [
-      {
-        name: '@country',
-        value: 'USA',
-      },
-    ],
-  };
-
-  const { resources: results } = await client
-    .database(databaseId)
-    .container(containerId)
-    .items.query('SELECT * from c')
-    .fetchAll();
-
-  return JSON.stringify(results);
-  // for (var queryResult of results) {
-  //   let resultString = JSON.stringify(queryResult);
-  //   console.log(`\tQuery returned ${resultString}\n`);
-  // }
-}
-
-/**
- * Replace the item by ID.
- */
 async function replaceFamilyItem(itemBody) {
   console.log(`Replacing item:\n${itemBody.id}\n`);
-  // Change property 'grade'
   itemBody.children = 'duh';
   const { item } = await client
     .database(databaseId)
-    .container(containerId)
+    .container(playlistsContainer)
     .item(itemBody.id, itemBody.partitionKey)
     .replace(itemBody);
 }
@@ -154,10 +33,7 @@ function randomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-async function uploadInfo(containerId, itemBody) {
-  // console.log(itemBody.partitionKey);
-  // Change property 'grade'
-
+async function uploadInfo(playlistsContainer, itemBody) {
   const tracks = itemBody.tracks.map((x) => {
     return {
       trackId: x,
@@ -171,76 +47,82 @@ async function uploadInfo(containerId, itemBody) {
   };
   const { item } = await client
     .database(databaseId)
-    .container(containerId)
+    .container(playlistsContainer)
     .item(newBody.id)
     .replace(newBody);
+}
+
+async function deleteVote(trackId, userId) {
+  await client
+    .database(databaseId)
+    .container(votesContainer)
+    .item(trackId, userId)
+    .delete();
+}
+async function addVote(trackId, userId, points, playlistId) {
+  await client.database(databaseId).container(votesContainer).items.create({
+    id: trackId,
+    userId,
+    points,
+    playlistId,
+  });
 }
 
 async function postVote(itemBody) {
   const { resources: results } = await client
     .database(databaseId)
-    .container(containerId)
+    .container(playlistsContainer)
     .items.query(`SELECT * from c where c.id="${itemBody.playlistId}"`)
     .fetchAll();
-
-  const playlist = results[0];
-  const index = playlist.tracks.findIndex(
-    (x) => x.trackId === itemBody.trackId
-  );
+  const newPlaylist = results[0];
   if (itemBody.points <= 0) {
-    const vote = playlist.votes.find(
-      (x) => x.userId === itemBody.userId && x.trackId === itemBody.trackId
-    );
-    playlist.tracks[index].votes -= vote.points;
-    playlist.votes = playlist.votes.filter(
-      (x) => !(x.userId === itemBody.userId && x.points === vote.points)
-    );
-    // console.log(playlist.votes);
+    await deleteVote(itemBody.trackId, itemBody.userId);
   } else {
-    playlist.tracks[index].votes += Number(itemBody.points);
-
-    playlist.votes.push({
-      userId: itemBody.userId,
-      trackId: itemBody.trackId,
-      points: itemBody.points,
-    });
+    await addVote(
+      itemBody.trackId,
+      itemBody.userId,
+      itemBody.points,
+      itemBody.playlistId
+    );
   }
-  const { item } = await client
+  newPlaylist.tracks.map((x) => {
+    if (x.trackId === itemBody.trackId) {
+      return {
+        votes: (x.votes += itemBody.points),
+        ...x,
+      };
+    }
+    return x;
+  });
+  await client
     .database(databaseId)
-    .container(containerId)
+    .container(playlistsContainer)
     .item(itemBody.playlistId)
-    .replace(playlist);
-
-  // playlist[index].votes += itemBody.points;
-  // playlist.votes=[...playlist.votes,{
-
-  // }]
+    .replace(newPlaylist);
 }
 
 async function getUserVotes(userId, playlistId) {
   const { resources: results } = await client
     .database(databaseId)
-    .container(containerId)
-    .items.query(`SELECT * from c where c.id="${playlistId}"`)
+    .container(votesContainer)
+    .items.query(
+      `SELECT * FROM c where c.userId="${userId}" and c.playlistId="${playlistId}"`
+    )
     .fetchAll();
   let votes = ['5', '4', '3', '2', '1'];
 
-  const playlist = results[0];
-  if (playlist) {
-    playlist.votes.map((vote) => {
-      if (vote.userId === userId) {
-        votes = votes.filter((x) => x !== vote.points);
-      }
+  if (results) {
+    results.map((vote) => {
+      votes = votes.filter((x) => x !== vote.points);
     });
   }
-  const userVotes = playlist.votes.filter((x) => x.userId == userId);
 
   let newVotes = [];
   for (let i = 1; i <= 5; i++) {
-    const match = userVotes.find((vote) => Number(vote.points) === i);
+    const match = results.find((vote) => vote.points === i);
     if (match) {
       newVotes.push({
-        trackId: match.trackId,
+        trackId: match.id,
         points: match.points,
       });
     } else {
@@ -257,24 +139,32 @@ async function getUserVotes(userId, playlistId) {
 async function updateTracks(newPlaylist, playlistId) {
   const { resource } = await client
     .database(databaseId)
-    .container(containerId)
+    .container(playlistsContainer)
     .item(playlistId)
     .replace(newPlaylist);
 
   return resource;
 }
 
-async function validateTracks(tracks, playlistId) {
+async function validateTracks(tracks, playlistId, userId) {
   const { resources: results } = await client
     .database(databaseId)
-    .container(containerId)
+    .container(playlistsContainer)
     .items.query(`SELECT * from c where c.id="${playlistId}"`)
     .fetchAll();
+
+  const { resources: votes } = await client
+    .database(databaseId)
+    .container(votesContainer)
+    .items.query(
+      `SELECT * FROM c where c.userId="${userId}" and c.playlistId="${playlistId}"`
+    )
+    .fetchAll();
+
   const trackArray = [];
   let updatedArray = [];
   if (results[0]) {
     const dbTracks = results[0].tracks;
-    const dbVotes = results[0].votes;
     tracks.forEach((spotifyTrack, index) => {
       let votes = 0;
       const match = dbTracks.find((databaseTrack) => {
@@ -295,22 +185,22 @@ async function validateTracks(tracks, playlistId) {
         };
       }
     });
-
-    const newVotes = dbVotes.filter((vote) => {
-      return !!trackArray.find((track) => track.trackId === vote.trackId);
+    votes.forEach(async (vote) => {
+      if (!trackArray.find((track) => track.trackId === vote.id)) {
+        await deleteVote(vote.id, vote.userId);
+      }
     });
 
     const newPlaylist = {
       ...results[0],
       tracks: trackArray,
-      votes: newVotes,
     };
 
-    const labas = await updateTracks(newPlaylist, playlistId);
+    await updateTracks(newPlaylist, playlistId);
 
     const { resources: newResults } = await client
       .database(databaseId)
-      .container(containerId)
+      .container(playlistsContainer)
       .items.query(`SELECT * from c where c.id="${playlistId}"`)
       .fetchAll();
     if (newResults) {
@@ -334,7 +224,6 @@ async function validateTracks(tracks, playlistId) {
           votes: 0,
         };
       }),
-      votes: [],
     };
     tracks.map((x, index) => {
       trackArray[index] = x;
@@ -343,7 +232,7 @@ async function validateTracks(tracks, playlistId) {
     });
     const { resource } = await client
       .database(databaseId)
-      .container(containerId)
+      .container(playlistsContainer)
       .items.create(newItem);
 
     if (resource) {
@@ -360,7 +249,7 @@ async function validateTracks(tracks, playlistId) {
 async function deleteFamilyItem(itemBody) {
   await client
     .database(databaseId)
-    .container(containerId)
+    .container(playlistsContainer)
     .item(itemBody.id, itemBody.partitionKey)
     .delete(itemBody);
 }
@@ -373,8 +262,6 @@ async function cleanup() {
 }
 
 module.exports = {
-  queryContainer,
-  createFamilyItem,
   replaceFamilyItem,
   deleteFamilyItem,
   uploadInfo,

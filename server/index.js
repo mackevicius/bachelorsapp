@@ -15,16 +15,7 @@ const express = require('express');
 const router = express.Router();
 const dotenv = require('dotenv');
 const { error } = require('console');
-const {
-  queryContainer,
-  createFamilyItem,
-  replaceFamilyItem,
-  deleteFamilyItem,
-  uploadInfo,
-  validateTracks,
-  postVote,
-  getUserVotes,
-} = require('./dbIndex');
+const { validateTracks, postVote, getUserVotes } = require('./dbIndex');
 
 dotenv.config();
 
@@ -256,11 +247,12 @@ router.get('/getPlaylistTracks', (req, res) => {
     spotifyApi
       .getPlaylistTracks(req.query.id)
       .then((response) => {
-        validateTracks(response.body.items, req.query.id)
+        validateTracks(response.body.items, req.query.id, req.user.profile.id)
           .then((validated) => {
             res.send(validated);
           })
           .catch((err) => {
+            console.log(err);
             res.status(400).send('dbError');
           });
       })
