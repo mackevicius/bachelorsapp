@@ -94,7 +94,10 @@ passport.use(
 app.use(
   cors({
     credentials: true,
-    origin: 'https://www.spotifyplaylistvotingapp.xyz',
+    origin: [
+      'https://www.spotifyplaylistvotingapp.xyz',
+      'http://localhost:3000',
+    ],
   })
 );
 
