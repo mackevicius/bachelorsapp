@@ -189,7 +189,7 @@ router.get('/getUserId', (req, res) => {
   if (req.user) {
     res.json(req.user.profile.id);
   }
-  res.status(500).send('loggedOut');
+  res.status(401).send('loggedOut');
 });
 
 router.get('/getPlaylists', (req, res) => {
