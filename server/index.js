@@ -352,14 +352,11 @@ function handleDisconnect(userId) {
 wsServer.on('connection', function (connection, req) {
   // Generate a unique code for every user
   const userId = uuidv4();
-  console.log('Recieved a new connection');
   // Store the new connection and handle messages
   clients[userId] = connection;
   // console.log(connection);
   // console.log(`${userId} connected.`);
   connection.on('message', (message) => {
-    console.log(req.headers.cookie);
-
     const newMessage = JSON.parse(message.toString());
     if ((newMessage.type = 'contentchange')) {
       postVote(newMessage.content)
