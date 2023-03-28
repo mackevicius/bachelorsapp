@@ -3,7 +3,7 @@ import { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Context } from '../appContext';
 import styles from './Login.module.scss';
-import spotifyIcon from '../assets/spotifyIcon.png';
+import spotifyIcon from '../assets/spotifyIcon2.png';
 
 const Login = () => {
   const context = useContext(Context);
@@ -15,14 +15,16 @@ const Login = () => {
   }, []);
   return (
     <div className={styles.loginPageContainer}>
-      <header className={styles.infoSection}>
-        <div>Collaborative Spotify playlist voting app</div>
-        <div>Playlist tops decided by spotify users</div>
-        <div>Vote for your favorite songs!</div>
+      <header className={styles.headerSection}>
+        <h1>Collaborative Spotify playlist voting app</h1>
       </header>
+      <div className={styles.lowerInfoSection}>
+        <h3>Playlist tops decided by Spotify users</h3>
+        <h3>Vote for your favorite songs!</h3>
+      </div>
 
       <a className={styles.loginBtn} href={`${context.apiUrl}/login`}>
-        <img width={35} height={35} src={spotifyIcon} alt="spotifyIcon" />
+        <img width={25} height={25} src={spotifyIcon} alt="spotifyIcon" />
         Login with Spotify
       </a>
     </div>
