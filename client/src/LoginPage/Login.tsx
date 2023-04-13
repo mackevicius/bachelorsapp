@@ -1,4 +1,3 @@
-import { Button, Typography } from '@mui/material';
 import { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Context } from '../appContext';
@@ -25,7 +24,7 @@ const Login = () => {
 
       <a className={styles.loginBtn} href={`${context.apiUrl}/login`}>
         <img width={25} height={25} src={spotifyIcon} alt="spotifyIcon" />
-        Login with Spotify
+        <span>Login with Spotify</span>
       </a>
     </div>
   );

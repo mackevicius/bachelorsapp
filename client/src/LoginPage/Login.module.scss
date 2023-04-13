@@ -16,7 +16,7 @@
   background-color: #191414;
   border-radius: 5px;
   height: 50px;
-  width: 250px;
+  width: 270px;
   display: flex;
   text-decoration: none;
   color: #191414;
@@ -33,10 +33,12 @@
   font-weight: bold;
   box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
   transition: ease-in-out 0.1s;
+  text-decoration: none;
   &:hover {
-    transform: scale(1.1);
+    box-shadow: rgba(0, 0, 0, 0.5) 10px 10px 20px;
+    // color: #1961414;
+    font-weight: 600;
     text-decoration: none;
-    // color: #191414;
     color: #1db954;
   }
 
@@ -61,6 +63,7 @@
     font-size: 70px;
     padding: 20px;
     backdrop-filter: blur(10px) saturate(70%);
+    --webkit-backdrop-filter: blur(10px) saturate(70%);
     border-radius: 20px;
   }
 }
@@ -75,7 +78,7 @@
 @media only screen and (min-width: 1500px) {
   .loginBtn {
     border-radius: 5px;
-    height: 80px;
+    height: 70px;
     width: 300px;
     display: flex;
     text-decoration: none;

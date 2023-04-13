@@ -15,7 +15,12 @@ const express = require('express');
 const router = express.Router();
 const dotenv = require('dotenv');
 const { error } = require('console');
-const { validateTracks, postVote, getUserVotes } = require('./dbIndex');
+const {
+  validateTracks,
+  postVote,
+  getUserVotes,
+  getPlaylists,
+} = require('./dbIndex');
 
 dotenv.config();
 
@@ -134,7 +139,6 @@ router.use((req, res, next) => {
         req.user.expires_in = data.body.expires_in;
       })
       .catch((err) => {
-        console.log(err);
         res.sendStatus(400);
       });
   }
@@ -153,6 +157,7 @@ router.get(
       'user-read-playback-state',
       'user-modify-playback-state',
       'playlist-read-private',
+      'playlist-modify-public',
     ],
     showDialog: true,
   }),
@@ -167,10 +172,7 @@ router.get(
   (req, res) => {
     wsServer.on('headers', function (headers) {
       headers.push('Set-Cookie: ' + 'userId=' + req.user.profile.id);
-      console.log('handshake response cookie', headers['set-cookie']);
     });
-    res.cookie('lopas', req.user);
-    res.cookie('duhas', 'hei', { secure: true, sameSite: 'none' });
     req.session.user = req.user;
     res.redirect(getCallbackRedirectUri());
   }
@@ -184,15 +186,8 @@ router.get('/getUserId', (req, res) => {
 });
 
 router.get('/getPlaylists', (req, res) => {
-  // res.cookie('daunas', 'ajaj');
-  // res.status(400).json({
-  //   requser: req.user,
-  //   lolsessinas: req.session,
-  //   reqsessionuser: req.session.user,
-  //   cookies: req.cookies,
-  // });
   if (!req.user) {
-    res.status(400).send('loggedOut');
+    res.status(401).send('loggedOut');
   } else {
     const spotifyApi = new SpotifyWebApi({
       clientId: process.env.CLIENT_ID,
@@ -200,8 +195,11 @@ router.get('/getPlaylists', (req, res) => {
       accessToken: req.user.accessToken,
       refreshToken: req.user.refreshToken,
     });
+
     spotifyApi
-      .getUserPlaylists('21y65ubkr6wutgxvdnj6f333a', {})
+      .getUserPlaylists('21y65ubkr6wutgxvdnj6f333a', {
+        limit: 50,
+      })
       .then((response) => {
         res.send(response.body.items);
       })
@@ -213,29 +211,22 @@ router.get('/getPlaylists', (req, res) => {
 
 router.post('/postVote', (req, res) => {});
 
-// app.get('/getPlaylistTracks', (req, res) => {
-//   if (!req.user) {
-//     res.status(400).send('loggedOut');
-//   } else {
-//     const spotifyApi = new SpotifyWebApi({
-//       clientId: process.env.CLIENT_ID,
-//       clientSecret: process.env.CLIENT_SECRET,
-//       accessToken: req.user.accessToken,
-//       refreshToken: req.user.refreshToken,
-//     });
-//     spotifyApi
-//       .getPlaylistTracks(req.query.id)
-//       .then((response) => {
-//         res.send(response.body);
-//       })
-//       .catch((err) => {
-//         res.send(err);
-//       });
-//   }
-// });
+router.post('/playPlaylist', (req, res) => {
+  const spotifyApi = new SpotifyWebApi({
+    clientId: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    accessToken: req.user.accessToken,
+    refreshToken: req.user.refreshToken,
+  });
+
+  spotifyApi.play({
+    context_uri: `spotify:playlist:${req.body.playlistId}`,
+  });
+});
+
 router.get('/getPlaylistTracks', (req, res) => {
   if (!req.user) {
-    res.status(400).send('loggedOut');
+    res.status(401).send('loggedOut');
   } else {
     const spotifyApi = new SpotifyWebApi({
       clientId: process.env.CLIENT_ID,
@@ -252,7 +243,6 @@ router.get('/getPlaylistTracks', (req, res) => {
             res.send(validated);
           })
           .catch((err) => {
-            console.log(err);
             res.status(400).send('dbError');
           });
       })
@@ -262,9 +252,32 @@ router.get('/getPlaylistTracks', (req, res) => {
   }
 });
 
+router.get('/searchPlaylists', (req, res) => {
+  if (!req.user) {
+    res.status(401).send('loggedOut');
+  } else {
+    const spotifyApi = new SpotifyWebApi({
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      accessToken: req.user.accessToken,
+      refreshToken: req.user.refreshToken,
+    });
+    spotifyApi
+      .searchPlaylists(req.query.query, {
+        limit: 10,
+      })
+      .then((response) => {
+        res.send(response.body);
+      })
+      .catch((err) => {
+        res.send(err);
+      });
+  }
+});
+
 router.get('/getUserVotes', (req, res) => {
   if (!req.user) {
-    res.status(400).send('loggedOut');
+    res.status(401).send('loggedOut');
   } else {
     getUserVotes(req.user.profile.id, req.query.id).then((response) => {
       res.send(response);
@@ -272,20 +285,47 @@ router.get('/getUserVotes', (req, res) => {
   }
 });
 
-// router.get('/searchPlaylist',(req,res)=>{
-//   if (!req.user) {
-//     res.status(400).send('loggedOut');
-//   } else {
-//     const spotifyApi = new SpotifyWebApi({
-//       clientId: process.env.CLIENT_ID,
-//       clientSecret: process.env.CLIENT_SECRET,
-//       accessToken: req.user.accessToken,
-//       refreshToken: req.user.refreshToken,
-//     });
-//     spotifyApi
-//       .searchPlaylists(req.query.search)
-//   }
-// })
+router.post('/addPlaylist', (req, res) => {
+  if (!req.user) {
+    res.status(401).send('loggedOut');
+  } else {
+    const spotifyApi = new SpotifyWebApi({
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      accessToken: req.user.accessToken,
+      refreshToken: req.user.refreshToken,
+    });
+    ge;
+    spotifyApi
+      .getUserPlaylists('21y65ubkr6wutgxvdnj6f333a', {
+        limit: 50,
+      })
+      .then((response) => {
+        const playlists = response.body.items;
+        const match = playlists.find((x) => x.id === req.body.playlistId);
+        if (!match) {
+          console.log(req.body.playlistId);
+          spotifyApi.follow;
+          spotifyApi
+            .followPlaylist(req.body.playlistId, {
+              public: {},
+            })
+            .then((response) => {
+              console.log(response);
+              res.status(200).send(true);
+            })
+            .catch((err) => {
+              res.status(401);
+            });
+        } else {
+          res.status(400).send('alreadyExists');
+        }
+      })
+      .catch((err) => {
+        res.send(err);
+      });
+  }
+});
 
 // I'm maintaining all active connections in this object
 const clients = {};
@@ -337,7 +377,6 @@ function handleMessage(message, userId) {
 }
 
 function handleDisconnect(userId) {
-  console.log(`${userId} disconnected.`);
   const json = { type: typesDef.USER_EVENT };
   const username = users[userId]?.username || userId;
   userActivity.push(`${username} left the document`);
@@ -354,8 +393,7 @@ wsServer.on('connection', function (connection, req) {
   const userId = uuidv4();
   // Store the new connection and handle messages
   clients[userId] = connection;
-  // console.log(connection);
-  // console.log(`${userId} connected.`);
+
   connection.on('message', (message) => {
     const newMessage = JSON.parse(message.toString());
     if ((newMessage.type = 'contentchange')) {

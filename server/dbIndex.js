@@ -146,6 +146,15 @@ async function updateTracks(newPlaylist, playlistId) {
   return resource;
 }
 
+async function getPlaylists() {
+  const { resources: playlists } = await client
+    .database(databaseId)
+    .container(playlistsContainer)
+    .items.query('SELECT * from c')
+    .fetchAll();
+  return playlists;
+}
+
 async function validateTracks(tracks, playlistId, userId) {
   const { resources: results } = await client
     .database(databaseId)
@@ -268,4 +277,5 @@ module.exports = {
   validateTracks,
   postVote,
   getUserVotes,
+  getPlaylists,
 };
