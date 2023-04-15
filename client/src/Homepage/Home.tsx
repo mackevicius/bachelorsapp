@@ -1,18 +1,25 @@
 import { useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Home.module.scss';
-import { PlaylistLoadingSkeleton } from '../common/PlaylistLoadingSkeleton';
+import { PlaylistLoadingSkeleton } from './components/PlaylistLoadingSkeleton';
 import { Context } from '../appContext';
 import axios from 'axios';
 import ReactPaginate from 'react-paginate';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { PlaylistCard } from './PlaylistCard';
-import SearchBox from './SearchBox';
+import { PlaylistCard } from './components/PlaylistCard';
+import SearchBox from './components/SearchBox';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const COUNT = 20;
+
+export interface Playlist {
+  id: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+}
 
 export const Home = () => {
   const navigate = useNavigate();
@@ -50,18 +57,24 @@ export const Home = () => {
     getPlaylists();
   }, []);
 
-  const handleAddPlaylist = (playlistId: string) => {
+  const handleAddPlaylist = (
+    playlistId: string,
+    name: string,
+    description: string,
+    imageUrl: string
+  ) => {
+    setLoading(true);
     axios
       .post(
         context.apiUrl + '/addPlaylist',
-        { playlistId },
+        { playlistId, name, description, imageUrl },
         { withCredentials: true }
       )
       .then(() => {
         getPlaylists();
         toast('Playlist successfully added', {
           type: 'success',
-          position: 'bottom-right',
+          position: 'top-right',
           theme: 'colored',
         });
       })
@@ -69,7 +82,7 @@ export const Home = () => {
         if (err.response.data === 'alreadyExists') {
           toast('Playlist already exists', {
             type: 'error',
-            position: 'bottom-right',
+            position: 'top-right',
             theme: 'colored',
           });
         }
@@ -105,7 +118,7 @@ export const Home = () => {
           {loading ? (
             <PlaylistLoadingSkeleton />
           ) : (
-            currentItems?.map((x: SpotifyApi.PlaylistBaseObject) => (
+            currentItems?.map((x: Playlist) => (
               <PlaylistCard
                 key={x.id}
                 playlist={x}

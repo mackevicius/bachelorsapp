@@ -1,10 +1,11 @@
 import React from 'react';
-import styles from './Home.module.scss';
+import styles from '../Home.module.scss';
 import { CardMedia } from '@mui/material';
-import playButton from '../assets/Spotify-Play-Button.png';
+import playButton from '../../assets/Spotify-Play-Button.png';
+import { Playlist } from '../Home';
 
 interface Props {
-  playlist: SpotifyApi.PlaylistBaseObject;
+  playlist: Playlist;
   onPlaylistClick: () => void;
 }
 
@@ -15,7 +16,7 @@ export const PlaylistCard: React.FC<Props> = ({
   return (
     <div className={styles.playlistCard} onClick={onPlaylistClick}>
       <CardMedia
-        image={playlist.images[0].url}
+        image={playlist.imageUrl}
         title={playlist.name}
         className={styles.cardImage}
       />

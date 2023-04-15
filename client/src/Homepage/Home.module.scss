@@ -92,10 +92,13 @@
 main {
   position: relative;
   background-color: red;
+  display: flex;
+  flex-direction: column;
   border-radius: 20px;
   background-color: #121212;
   top: -20px;
   padding-top: 10px;
+  min-height: 80vh;
 }
 
 .searchBar {
@@ -155,7 +158,7 @@ main {
   }
 }
 .paginate {
-  margin-top: 40px;
+  margin-top: auto;
   display: flex;
   justify-content: center;
   column-gap: 10px;
@@ -173,7 +176,7 @@ main {
 }
 .searchButton {
   &:disabled {
-    background-color: #121212;
-    color: rgb(67, 67, 67);
+    background-color: #202020 !important;
+    color: rgb(67, 67, 67) !important;
   }
 }

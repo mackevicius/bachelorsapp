@@ -20,7 +20,9 @@ const {
   postVote,
   getUserVotes,
   getPlaylists,
+  addPlaylist,
 } = require('./dbIndex');
+const e = require('cors');
 
 dotenv.config();
 
@@ -189,39 +191,30 @@ router.get('/getPlaylists', (req, res) => {
   if (!req.user) {
     res.status(401).send('loggedOut');
   } else {
-    const spotifyApi = new SpotifyWebApi({
-      clientId: process.env.CLIENT_ID,
-      clientSecret: process.env.CLIENT_SECRET,
-      accessToken: req.user.accessToken,
-      refreshToken: req.user.refreshToken,
-    });
-
-    spotifyApi
-      .getUserPlaylists('21y65ubkr6wutgxvdnj6f333a', {
-        limit: 50,
-      })
-      .then((response) => {
-        res.send(response.body.items);
-      })
+    getPlaylists()
+      .then((playlists) => res.send(playlists))
       .catch((err) => {
-        res.send(err);
+        res.status(400).send('error');
       });
   }
 });
 
-router.post('/postVote', (req, res) => {});
-
-router.post('/playPlaylist', (req, res) => {
-  const spotifyApi = new SpotifyWebApi({
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    accessToken: req.user.accessToken,
-    refreshToken: req.user.refreshToken,
-  });
-
-  spotifyApi.play({
-    context_uri: `spotify:playlist:${req.body.playlistId}`,
-  });
+router.post('/addPlaylist', (req, res) => {
+  addPlaylist(
+    req.body.playlistId,
+    req.body.name,
+    req.body.description,
+    req.body.imageUrl
+  )
+    .then(() => {
+      res.status(200).send(true);
+    })
+    .catch((err) => {
+      if (err.code === 409) {
+        res.status(401).send('alreadyExists');
+      }
+      res.status(500);
+    });
 });
 
 router.get('/getPlaylistTracks', (req, res) => {
@@ -236,7 +229,9 @@ router.get('/getPlaylistTracks', (req, res) => {
     });
 
     spotifyApi
-      .getPlaylistTracks(req.query.id)
+      .getPlaylistTracks(req.query.id, {
+        limit: 50,
+      })
       .then((response) => {
         validateTracks(response.body.items, req.query.id, req.user.profile.id)
           .then((validated) => {
@@ -282,48 +277,6 @@ router.get('/getUserVotes', (req, res) => {
     getUserVotes(req.user.profile.id, req.query.id).then((response) => {
       res.send(response);
     });
-  }
-});
-
-router.post('/addPlaylist', (req, res) => {
-  if (!req.user) {
-    res.status(401).send('loggedOut');
-  } else {
-    const spotifyApi = new SpotifyWebApi({
-      clientId: process.env.CLIENT_ID,
-      clientSecret: process.env.CLIENT_SECRET,
-      accessToken: req.user.accessToken,
-      refreshToken: req.user.refreshToken,
-    });
-    ge;
-    spotifyApi
-      .getUserPlaylists('21y65ubkr6wutgxvdnj6f333a', {
-        limit: 50,
-      })
-      .then((response) => {
-        const playlists = response.body.items;
-        const match = playlists.find((x) => x.id === req.body.playlistId);
-        if (!match) {
-          console.log(req.body.playlistId);
-          spotifyApi.follow;
-          spotifyApi
-            .followPlaylist(req.body.playlistId, {
-              public: {},
-            })
-            .then((response) => {
-              console.log(response);
-              res.status(200).send(true);
-            })
-            .catch((err) => {
-              res.status(401);
-            });
-        } else {
-          res.status(400).send('alreadyExists');
-        }
-      })
-      .catch((err) => {
-        res.send(err);
-      });
   }
 });
 

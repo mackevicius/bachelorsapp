@@ -5,20 +5,26 @@ import {
   debounce,
 } from '@mui/material';
 import React, { useContext, useMemo, useState } from 'react';
-import styles from './Home.module.scss';
+import styles from '../Home.module.scss';
 import axios from 'axios';
-import { Context } from '../appContext';
-import { CssTextField } from '../common/CssTextField';
+import { Context } from '../../appContext';
+import { CssTextField } from '../../common/CssTextField';
 
 export interface PlaceType {
   name: string;
   id: string;
   imageUrl: string;
+  description: string;
 }
 
 interface Props {
   isPlaylistsLoading: boolean;
-  onAddPlaylist: (playlistId: string) => void;
+  onAddPlaylist: (
+    playlistId: string,
+    name: string,
+    description: string,
+    imageUrl: string
+  ) => void;
 }
 
 export const SearchBox: React.FC<Props> = ({
@@ -30,12 +36,6 @@ export const SearchBox: React.FC<Props> = ({
   const [options, setOptions] = useState<readonly PlaceType[]>([]);
   const [optionsLoading, setOptionsLoading] = useState<boolean>(false);
   const context = useContext(Context);
-
-  const styles2 = () => ({
-    disabledButton: {
-      backgroundColor: 'red',
-    },
-  });
 
   const search = (newValue: string) => {
     setOptionsLoading(true);
@@ -50,6 +50,7 @@ export const SearchBox: React.FC<Props> = ({
               id: x.id,
               name: x.name,
               imageUrl: x.images[0].url,
+              description: x.description,
             };
           }
         );
@@ -81,7 +82,6 @@ export const SearchBox: React.FC<Props> = ({
           setValue(value);
         }}
         options={options || []}
-        loading={optionsLoading}
         noOptionsText="Nothing found, please specify"
         renderInput={(params) => (
           <CssTextField
@@ -95,7 +95,11 @@ export const SearchBox: React.FC<Props> = ({
               endAdornment: (
                 <React.Fragment>
                   {optionsLoading ? (
-                    <CircularProgress color="inherit" size={20} />
+                    <CircularProgress
+                      color="inherit"
+                      size={20}
+                      style={{ marginLeft: 5 }}
+                    />
                   ) : null}
                   {params.InputProps.endAdornment}
                 </React.Fragment>
@@ -136,7 +140,14 @@ export const SearchBox: React.FC<Props> = ({
           fontFamily: 'Gotham Bold',
         }}
         size="large"
-        onClick={() => onAddPlaylist(value?.id as string)}
+        onClick={() =>
+          onAddPlaylist(
+            value?.id as string,
+            value?.name as string,
+            value?.description as string,
+            value?.imageUrl as string
+          )
+        }
         disabled={!value || isPlaylistsLoading}
         className={styles.searchButton}
       >

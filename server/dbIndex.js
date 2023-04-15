@@ -29,27 +29,20 @@ async function replaceFamilyItem(itemBody) {
     .item(itemBody.id, itemBody.partitionKey)
     .replace(itemBody);
 }
-function randomInteger(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
 
-async function uploadInfo(playlistsContainer, itemBody) {
-  const tracks = itemBody.tracks.map((x) => {
-    return {
-      trackId: x,
-      votes: randomInteger(1, 100),
-    };
-  });
-
+async function addPlaylist(id, name, description, imageUrl) {
   const newBody = {
-    id: itemBody.id,
-    tracks,
+    id,
+    name,
+    description,
+    imageUrl,
+    tracks: [],
   };
+
   const { item } = await client
     .database(databaseId)
     .container(playlistsContainer)
-    .item(newBody.id)
-    .replace(newBody);
+    .items.create(newBody);
 }
 
 async function deleteVote(trackId, userId) {
@@ -221,7 +214,6 @@ async function validateTracks(tracks, playlistId, userId) {
         };
       });
     }
-
     return JSON.stringify(updatedArray);
   } else {
     const newItem = {
@@ -273,7 +265,7 @@ async function cleanup() {
 module.exports = {
   replaceFamilyItem,
   deleteFamilyItem,
-  uploadInfo,
+  addPlaylist,
   validateTracks,
   postVote,
   getUserVotes,
