@@ -1,10 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './PlaylistPage.module.scss';
-import { Context } from '../appContext';
+import { Context } from '../context/appContext';
 import axios from 'axios';
 import { JsonValue, WebSocketHook } from 'react-use-websocket/dist/lib/types';
-import { Vote } from '../App2';
+import { Vote } from '../App';
 import FlipMove from 'react-flip-move';
 import { TrackTile } from './Track';
 
@@ -30,6 +30,9 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [userVotes, setUserVotes] = useState<UserVote[]>([]);
+  const [playlistInfo, setPlaylistInfo] = useState<
+    SpotifyApi.PlaylistBaseObject | undefined
+  >(undefined);
   useEffect(() => {
     if ((socket.lastJsonMessage as any)?.type === 'error') {
       console.log(socket.lastJsonMessage as any);
@@ -88,6 +91,12 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
 
   useEffect(() => {
     axios
+      .get(apiUrl + '/getPlaylistInfo?id=' + id, { withCredentials: true })
+      .then((res) => {
+        setPlaylistInfo(res.data.body);
+      });
+
+    axios
       .get(apiUrl + '/getPlaylistTracks?id=' + id, { withCredentials: true })
       .then((res) => {
         res.data.sort(
@@ -124,24 +133,40 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
 
   return (
     <div className={styles.playlistPageContainer}>
-      {isLoading && <div>liol</div>}
+      {isLoading ? (
+        <div>liol</div>
+      ) : (
+        <>
+          <header className={styles.playlistHeader}>
+            <div className={styles.headerText}>
+              <h1>{playlistInfo?.name}</h1>
+              <h5>{playlistInfo?.description}</h5>
+            </div>
 
-      <div className={styles.trackList}>
-        {tracks.length && (
-          <FlipMove>
-            {tracks.map((x) => (
-              <TrackTile
-                key={x.track?.id}
-                track={x}
-                playlistId={id || ''}
-                userVotes={userVotes}
-                isTrackVotedOn={isTrackVotedOn}
-                onMessageSend={onMessageSend}
-              />
-            ))}
-          </FlipMove>
-        )}
-      </div>
+            <img
+              className={styles.coverImage}
+              src={playlistInfo?.images[0].url}
+              alt={'playlistImage'}
+            />
+          </header>
+          <div className={styles.trackList}>
+            {tracks.length && (
+              <FlipMove>
+                {tracks.map((x) => (
+                  <TrackTile
+                    key={x.track?.id}
+                    track={x}
+                    playlistId={id || ''}
+                    userVotes={userVotes}
+                    isTrackVotedOn={isTrackVotedOn}
+                    onMessageSend={onMessageSend}
+                  />
+                ))}
+              </FlipMove>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

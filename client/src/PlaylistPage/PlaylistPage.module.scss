@@ -18,5 +18,59 @@
 }
 
 .playlistPageContainer {
-  padding: 20px;
+}
+
+.playlistHeader {
+  height: 30vh;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  display: flex;
+  padding: 20px 40px;
+
+  color: white;
+
+  align-items: center;
+
+  .coverImage {
+    width: 350px;
+    height: 350px;
+    box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px,
+      rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px,
+      rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
+    margin-left: auto;
+  }
+
+  .headerText {
+    display: flex;
+    flex-direction: column;
+    h1 {
+      font-size: 5rem;
+    }
+    h5 {
+      color: #727272;
+    }
+  }
+}
+
+@media only screen and (max-width: 700px) {
+  .playlistHeader {
+    flex-direction: column;
+    justify-content: center;
+    row-gap: 20px;
+    .coverImage {
+      width: 250px;
+      height: 250px;
+      margin: 0;
+    }
+    .headerText {
+      h1 {
+        font-size: 2.5rem;
+      }
+      h5 {
+        font-size: 1rem;
+      }
+    }
+  }
 }

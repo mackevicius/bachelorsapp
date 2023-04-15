@@ -7,7 +7,7 @@ import {
 import React, { useContext, useMemo, useState } from 'react';
 import styles from '../Home.module.scss';
 import axios from 'axios';
-import { Context } from '../../appContext';
+import { Context } from '../../context/appContext';
 import { CssTextField } from '../../common/CssTextField';
 
 export interface PlaceType {

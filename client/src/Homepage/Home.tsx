@@ -2,7 +2,7 @@ import { useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Home.module.scss';
 import { PlaylistLoadingSkeleton } from './components/PlaylistLoadingSkeleton';
-import { Context } from '../appContext';
+import { Context } from '../context/appContext';
 import axios from 'axios';
 import ReactPaginate from 'react-paginate';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';

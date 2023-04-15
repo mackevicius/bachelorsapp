@@ -3,7 +3,7 @@ import styles from '../Home.module.scss';
 import { CardMedia } from '@mui/material';
 import playButton from '../../assets/Spotify-Play-Button.png';
 import { Playlist } from '../Home';
-import { Context } from '../../appContext';
+import { Context } from '../../context/appContext';
 import axios from 'axios';
 
 interface Props {

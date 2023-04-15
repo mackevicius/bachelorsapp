@@ -1,6 +1,6 @@
 import { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Context } from '../appContext';
+import { Context } from '../context/appContext';
 import styles from './Login.module.scss';
 import spotifyIcon from '../assets/spotifyIcon2.png';
 

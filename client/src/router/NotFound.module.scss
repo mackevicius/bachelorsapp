@@ -1,0 +1,60 @@
+.pageContainer {
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: start;
+  height: 100vh;
+  background: url('../assets/spotifyBackground.png') no-repeat center center
+    fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
+.headerSection {
+  color: #ffffff;
+  display: flex;
+  align-items: start;
+  justify-content: start;
+  flex-direction: column;
+  text-align: center;
+  font-size: large;
+  font-weight: bold;
+  margin-top: 6%;
+  padding: 0 20px;
+
+  h1 {
+    font-size: 70px;
+    padding: 20px;
+    backdrop-filter: blur(10px) saturate(70%);
+    --webkit-backdrop-filter: blur(10px) saturate(70%);
+    border-radius: 20px;
+  }
+}
+
+@media only screen and (max-width: 1000px) {
+  .headerSection {
+    h1 {
+      font-size: 50px;
+    }
+    margin-top: 20%;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .headerSection {
+    h1 {
+      font-size: 40px;
+    }
+    margin-top: 40%;
+  }
+
+  .lowerInfoSection {
+    h3 {
+      font-size: 20px;
+    }
+    width: 70%;
+    bottom: 15%;
+  }
+}

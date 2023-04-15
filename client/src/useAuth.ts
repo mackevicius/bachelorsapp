@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import { Context } from './appContext';
+import { Context } from './context/appContext';
 
 export default function useAuth(code: string) {
   const [accessToken, setAccessToken] = useState<string>();

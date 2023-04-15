@@ -1,200 +1,106 @@
-import { useEffect, useState, useContext } from 'react';
-import { Navbar, NavbarBrand, UncontrolledTooltip } from 'reactstrap';
-import useWebSocket, { ReadyState } from 'react-use-websocket';
-import { DefaultEditor } from 'react-simple-wysiwyg';
-import Avatar from 'react-avatar';
+import Login from './LoginPage/Login';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Context, defaultValue } from './context/appContext';
+import { Home } from './Homepage/Home';
+import { useContext, useEffect, useState } from 'react';
+import { PlaylistPage } from './PlaylistPage/PlaylistPage';
+import { useWebSocket } from 'react-use-websocket/dist/lib/use-websocket';
 import axios from 'axios';
-
-import './App.css';
-import useAuth from './useAuth';
-import { Context } from './appContext';
-
-function isUserEvent(message: any): boolean {
-  const evt = JSON.parse(message.data);
-  return evt.type === 'userevent';
-}
+import NotFound from './router/NotFound';
+import {
+  Experimental_CssVarsProvider as CssVarsProvider,
+  experimental_extendTheme as extendTheme,
+} from '@mui/material/styles';
 
 function isDocumentEvent(message: any) {
   const evt = JSON.parse(message.data);
-  return evt.type === 'contentchange';
+  return evt.type === 'contentchange' || evt.type === 'error';
 }
 
-function App({ code }: { code: string }) {
-  const accessToken = useAuth(code);
-  const context = useContext(Context);
+export interface Vote {
+  trackId: string;
+  userId: string;
+  points: number;
+}
 
-  const [username, setUsername] = useState('');
-  const { sendJsonMessage, readyState } = useWebSocket(context.socketUrl, {
-    onOpen: () => {
+const theme = extendTheme({
+  colorSchemes: {
+    light: {
+      palette: {
+        primary: {
+          main: '#000',
+        },
+      },
+    },
+  },
+});
+
+const App = () => {
+  // const value = Object.assign({ ...defaultValue, code });
+  // const accessToken = useAuth(code);
+  const { apiUrl, socketUrl } = useContext(Context);
+  const [playlistImage, setPlaylistImage] = useState<string>('');
+  const navigate = useNavigate();
+
+  const socket = useWebSocket(socketUrl, {
+    onOpen: (event) => {
       console.log('WebSocket connection established.');
     },
     share: true,
-    filter: () => false,
+    filter: isDocumentEvent,
     retryOnError: true,
     shouldReconnect: () => true,
+    onMessage(event) {
+      // console.log(event);
+    },
   });
 
-  useEffect(() => {
-    const getItems = async () => {
-      const response = await fetch(`${context.apiUrl}/items`);
-      const data = await response.json();
-      console.log(data);
-    };
-    const replace = async () => {
-      axios.post(`${context.apiUrl}/update`, {
-        id: 'lopas',
-        labas: 'hujan22as21',
-      });
-    };
+  const handleSendMessage = (
+    playlistId: string,
+    trackId: string,
+    points: number
+  ) => {
+    socket.sendJsonMessage({
+      type: 'contentchange',
+      content: {
+        playlistId,
+        trackId,
+        points,
+        userId: localStorage.getItem('userId'),
+      },
+    });
+  };
 
-    // const addItem = async () => {
-    //   axios.post(`${getApiUrl()}/add`, {
-    //     id: 'Povilas',
-    //     partitionKey: 'viensdu',
-    //   });
-    // };
-    // replace();
-    // addItem();
-    getItems();
+  useEffect(() => {
+    if (!localStorage.getItem('userId')) {
+      axios
+        .get(apiUrl + '/getUserId', { withCredentials: true })
+        .then((res) => {
+          localStorage.setItem('userId', res.data);
+        })
+        .catch((err) => {
+          navigate('/login');
+        });
+    }
   }, []);
 
-  useEffect(() => {
-    if (username && readyState === ReadyState.OPEN) {
-      sendJsonMessage({
-        username,
-        type: 'userevent',
-      });
-    }
-  }, [username, sendJsonMessage, readyState]);
-
   return (
-    <>
-      <Navbar color="light" light>
-        <NavbarBrand href="/">Real-time document editor</NavbarBrand>
-      </Navbar>
-      <div className="container-fluid">
-        {username ? <EditorSection /> : <LoginSection onLogin={setUsername} />}
-      </div>
-    </>
-  );
-}
-
-function LoginSection({ onLogin }: any) {
-  const context = useContext(Context);
-
-  const [username, setUsername] = useState('');
-  useWebSocket(context.socketUrl, {
-    share: true,
-    filter: () => false,
-  });
-  function logInUser() {
-    if (!username.trim()) {
-      return;
-    }
-    onLogin && onLogin(username);
-  }
-
-  return (
-    <div className="account">
-      <div className="account__wrapper">
-        <div className="account__card">
-          <div className="account__profile">
-            <p className="account__name">Hello, user!</p>
-            <p className="account__sub">Join to edit the document</p>
-          </div>
-          <input
-            name="username"
-            onInput={(e) => setUsername(e.currentTarget.value)}
-            className="form-control"
+    <Context.Provider value={defaultValue}>
+      <CssVarsProvider theme={theme}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/playlist/:id"
+            element={
+              <PlaylistPage socket={socket} onMessageSend={handleSendMessage} />
+            }
           />
-          <button
-            type="button"
-            onClick={() => {
-              logInUser();
-            }}
-            className="btn btn-primary account__btn"
-          >
-            Join
-          </button>
-        </div>
-      </div>
-    </div>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </CssVarsProvider>
+    </Context.Provider>
   );
-}
-
-function History() {
-  const context = useContext(Context);
-
-  const { lastJsonMessage } = useWebSocket(context.socketUrl, {
-    share: true,
-    filter: isUserEvent,
-  });
-  const activities = (lastJsonMessage as any)?.data.userActivity || [];
-  return (
-    <ul>
-      {activities.map((activity: any, index: any) => (
-        <li key={`activity-${index}`}>{activity}</li>
-      ))}
-    </ul>
-  );
-}
-
-function Users() {
-  const context = useContext(Context);
-  const { lastJsonMessage } = useWebSocket(context.socketUrl, {
-    share: true,
-    filter: isUserEvent,
-  });
-  const users = Object.values((lastJsonMessage as any)?.data.users || {});
-  return (
-    <div>
-      {users.map((user: any) => (
-        <div key={user.username}>
-          <span id={user.username} className="userInfo" key={user.username}>
-            <Avatar name={user.username} size={'40'} round="20px" />
-          </span>
-          <UncontrolledTooltip placement="top" target={user.username}>
-            {user.username}
-          </UncontrolledTooltip>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function EditorSection() {
-  return (
-    <div className="main-content">
-      <div className="document-holder">
-        <div className="currentusers">
-          <Users />
-        </div>
-        <Document />
-      </div>
-      <div className="history-holder">
-        <History />
-      </div>
-    </div>
-  );
-}
-
-function Document() {
-  const context = useContext(Context);
-  const { lastJsonMessage, sendJsonMessage } = useWebSocket(context.socketUrl, {
-    share: true,
-    filter: isDocumentEvent,
-  });
-
-  let html = (lastJsonMessage as any)?.data.editorContent || '';
-
-  function handleHtmlChange(e: any) {
-    sendJsonMessage({
-      type: 'contentchange',
-      content: e.target.value,
-    });
-  }
-
-  return <DefaultEditor value={html} onChange={handleHtmlChange} />;
-}
+};
 
 export default App;

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useContext } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
-import { Context } from './appContext';
+import { Context } from './context/appContext';
 
 export const WebSocketDemo = () => {
   //Public API that will echo messages sent to it back to the client

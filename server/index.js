@@ -271,6 +271,23 @@ router.get('/getPlaylistTracks', (req, res) => {
   }
 });
 
+router.get('/getPlaylistInfo', (req, res) => {
+  if (!req.user) {
+    res.status(401).send('loggedOut');
+  } else {
+    const spotifyApi = new SpotifyWebApi({
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      accessToken: req.user.accessToken,
+      refreshToken: req.user.refreshToken,
+    });
+
+    spotifyApi.getPlaylist(req.query.id).then((response) => {
+      res.status(200).send(response);
+    });
+  }
+});
+
 router.get('/searchPlaylists', (req, res) => {
   if (!req.user) {
     res.status(401).send('loggedOut');
