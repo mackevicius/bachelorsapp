@@ -217,6 +217,30 @@ router.post('/addPlaylist', (req, res) => {
     });
 });
 
+router.post('/playlistPreview', (req, res) => {
+  const spotifyApi = new SpotifyWebApi({
+    clientId: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    accessToken: req.user.accessToken,
+    refreshToken: req.user.refreshToken,
+  });
+
+  spotifyApi
+    .getMyDevices()
+    .then((response) => {
+      spotifyApi
+        .play({
+          device_id: response.body.devices[0].id,
+          context_uri: `spotify:playlist:${req.body.id}`,
+        })
+        .then(() => res.send(200))
+        .catch((err) => res.status(400).status('Couldnt play'));
+    })
+    .catch((err) => {
+      res.status(400).send('noDevices');
+    });
+});
+
 router.get('/getPlaylistTracks', (req, res) => {
   if (!req.user) {
     res.status(401).send('loggedOut');

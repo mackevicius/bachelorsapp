@@ -102,6 +102,17 @@ export const Home = () => {
     setItemOffset(newOffset);
   };
 
+  const handleNoDevicesFound = () => {
+    toast(
+      'No active devices found. Make sure to open the Spotify App in your preferred device',
+      {
+        position: 'top-right',
+        theme: 'colored',
+        type: 'error',
+      }
+    );
+  };
+
   return (
     <div className={styles.homePageContainer}>
       <header>
@@ -125,6 +136,7 @@ export const Home = () => {
                 onPlaylistClick={() => {
                   navigate(`/playlist/${x.id}`);
                 }}
+                onNoDevicesFound={handleNoDevicesFound}
               ></PlaylistCard>
             ))
           )}
