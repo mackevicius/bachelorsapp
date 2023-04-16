@@ -14,6 +14,7 @@ const session = require('express-session');
 const express = require('express');
 const router = express.Router();
 const dotenv = require('dotenv');
+const fs = require('fs');
 const { error } = require('console');
 const {
   validateTracks,
@@ -31,17 +32,6 @@ var app = express();
 // Spinning the http server and the WebSocket server.
 const server = http.createServer(app);
 const wsServer = new WebSocketServer({ server });
-
-const generateRandomString = function (length) {
-  var text = '';
-  var possible =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-  for (var i = 0; i < length; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
-};
 
 const getRedirectUri = () => {
   if (process.env.NODE_ENV === 'development')
@@ -101,8 +91,12 @@ app.use(
 
 app.use(cookies());
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({}));
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  })
+);
 
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1); // trust first proxy
@@ -152,6 +146,7 @@ router.get(
   '/login',
   passport.authenticate('spotify', {
     scope: [
+      'ugc-image-upload',
       'streaming',
       'user-read-private',
       'user-read-email',
@@ -276,6 +271,65 @@ router.get('/getPlaylistTracks', (req, res) => {
       })
       .catch((err) => {
         res.send(err);
+      });
+  }
+});
+
+function convertImageToBase64(imgUrl, callback) {
+  const image = new Image();
+  image.crossOrigin = 'anonymous';
+  image.onload = () => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.height = 300;
+    canvas.width = 300;
+    ctx?.drawImage(image, 0, 0);
+    const dataUrl = canvas.toDataURL();
+    callback && callback(dataUrl);
+    return dataUrl;
+  };
+  image.src = imgUrl;
+}
+
+function base64_encode(file) {
+  return 'data:image/gif;base64,' + fs.readFileSync(file, 'base64');
+}
+
+router.post('/savePlaylist', (req, res) => {
+  if (!req.user) {
+    res.status(401).send('loggedOut');
+  } else {
+    const spotifyApi = new SpotifyWebApi({
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      accessToken: req.user.accessToken,
+      refreshToken: req.user.refreshToken,
+    });
+    console.log(req.body.imageUrl);
+    const base64str = base64_encode('./please.png').split(',')[1];
+
+    spotifyApi
+      .createPlaylist(req.body.name)
+      .then((response1) => {
+        spotifyApi
+          .uploadCustomPlaylistCoverImage(response1.body.id, base64str)
+          .then((response2) => {
+            spotifyApi
+              .addTracksToPlaylist(response1.body.id, req.body.tracks)
+              .then(() => {
+                console.log('heyy');
+                res.status(200).send(true);
+              })
+              .catch(() => res.status(400).send('lo'));
+          })
+          .catch((err) => {
+            console.log(err);
+            res.status(400).send('s');
+          });
+      })
+      .catch((err) => {
+        res.status(400).send(err);
+        console.log(err);
       });
   }
 });

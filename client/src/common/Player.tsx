@@ -20,7 +20,7 @@ export const Player: React.FC<Props> = ({ token, trackUri, tracksUris }) => {
       <SpotifyPlayer
         token={token}
         uris={trackUri || tracksUris}
-        name="player"
+        name="Voting App"
         play={play}
         callback={(state) => {
           if (state.isPlaying) setPlay(false);

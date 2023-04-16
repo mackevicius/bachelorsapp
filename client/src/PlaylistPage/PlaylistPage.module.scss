@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   padding: 20px;
+  padding-bottom: 100px;
 }
 
 .playlistHeader {
@@ -44,10 +45,16 @@
 
       svg {
         transition: all ease-in-out 0.1s;
-
         color: #1db954;
         font-size: 120px;
+        z-index: 20;
       }
+    }
+    .addLoading {
+      color: #1db954;
+      position: absolute;
+      bottom: -65px;
+      left: -65px;
     }
   }
 
@@ -63,16 +70,36 @@
   }
 }
 
+@media only screen and (max-width: 1500px) {
+  .playlistHeader {
+    row-gap: 20px;
+    .coverImage {
+      img {
+        width: 200px;
+        height: 200px;
+        margin: 0;
+      }
+      .addPlaylistButton {
+        bottom: -50px;
+        left: -40px;
+        svg {
+          font-size: 90px;
+        }
+      }
+      .addLoading {
+        position: absolute;
+        bottom: -20px;
+        left: -30px;
+      }
+    }
+  }
+}
 @media only screen and (max-width: 700px) {
   .playlistHeader {
     flex-direction: column;
     justify-content: center;
     row-gap: 20px;
-    .coverImage {
-      width: 250px;
-      height: 250px;
-      margin: 0;
-    }
+
     .headerText {
       h1 {
         font-size: 2.5rem;

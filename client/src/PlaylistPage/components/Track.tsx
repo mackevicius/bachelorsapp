@@ -88,7 +88,7 @@ export const TrackTile: React.FC<Props> = forwardRef(
                     key={x.points}
                     size="small"
                     type="submit"
-                    color="error"
+                    color="success"
                     onClick={() =>
                       props.onMessageSend(
                         props.playlistId || '',

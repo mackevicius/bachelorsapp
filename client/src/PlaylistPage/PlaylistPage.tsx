@@ -9,8 +9,15 @@ import FlipMove from 'react-flip-move';
 import { TrackTile } from './components/Track';
 import { Player } from '../common/Player';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
-import { Tooltip, TooltipProps, styled, tooltipClasses } from '@mui/material';
+import {
+  CircularProgress,
+  Tooltip,
+  TooltipProps,
+  styled,
+  tooltipClasses,
+} from '@mui/material';
 import Zoom from '@mui/material/Zoom';
+import { ToastContainer, toast } from 'react-toastify';
 
 interface Props {
   socket: WebSocketHook<JsonValue | null, MessageEvent<any> | null>;
@@ -40,6 +47,57 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
   const [token, setToken] = useState<string | undefined>(undefined);
   const [trackUri, setTrackUri] = useState<string | undefined>(undefined);
   const [playerTracks, setPlayerTracks] = useState<string[]>([]);
+  const [addLoading, setAddLoading] = useState<boolean>(false);
+
+  function convertURIToImageData(URI: string) {
+    return new Promise(function (resolve, reject) {
+      let canvas = document.createElement('canvas'),
+        context = canvas.getContext('2d'),
+        image = new Image();
+      image.crossOrigin = 'Anonymous';
+      image.addEventListener(
+        'load',
+        function () {
+          canvas.width = 300;
+          canvas.height = 300;
+          context?.drawImage(image, 0, 0, canvas.width, canvas.height);
+          resolve(context?.getImageData(0, 0, canvas.width, canvas.height));
+        },
+        false
+      );
+      image.src = URI;
+    });
+  }
+
+  const savePlaylist = () => {
+    setAddLoading(true);
+    axios
+      .post(
+        apiUrl + '/savePlaylist',
+        {
+          name: playlistInfo?.name,
+          imageUri: 'asdas',
+          tracks: tracks.map((track) => track.track?.uri),
+        },
+        { withCredentials: true }
+      )
+      .then((response) => {
+        console.log(response);
+        toast('Playlist successfully added', {
+          position: 'top-right',
+          type: 'success',
+          theme: 'colored',
+        });
+      })
+      .catch((err) => {
+        toast('Failed to add playlist', {
+          position: 'top-right',
+          type: 'error',
+          theme: 'colored',
+        });
+      })
+      .finally(() => setAddLoading(false));
+  };
 
   useEffect(() => {
     if ((socket.lastJsonMessage as any)?.type === 'error') {
@@ -104,6 +162,11 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
       .get(apiUrl + '/getPlaylistInfo?id=' + id, { withCredentials: true })
       .then((res) => {
         setPlaylistInfo(res.data.body);
+        convertURIToImageData(res.data.body.images[0].url as string).then(
+          (res) => {
+            console.log(res);
+          }
+        );
       });
 
     axios
@@ -167,24 +230,29 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
               <h1>{playlistInfo?.name}</h1>
               <h5>{playlistInfo?.description}</h5>
             </div>
-
             <div className={styles.coverImage}>
               <img src={playlistInfo?.images[0].url} alt={'playlistImage'} />
-
-              <button className={styles.addPlaylistButton}>
-                <BootstrapTooltip
-                  title={
-                    <h5 style={{ margin: 5, color: '#727272' }}>
-                      Save playlist
-                    </h5>
-                  }
-                  placement="left"
-                  TransitionComponent={Zoom}
-                  sx={{ fontSize: 20 }}
+              {!addLoading ? (
+                <button
+                  className={styles.addPlaylistButton}
+                  onClick={savePlaylist}
                 >
-                  <PlaylistAddIcon />
-                </BootstrapTooltip>
-              </button>
+                  <BootstrapTooltip
+                    title={
+                      <h5 style={{ margin: 5, color: '#727272' }}>
+                        Save playlist
+                      </h5>
+                    }
+                    placement="left"
+                    TransitionComponent={Zoom}
+                    sx={{ fontSize: 20 }}
+                  >
+                    <PlaylistAddIcon />
+                  </BootstrapTooltip>
+                </button>
+              ) : (
+                <CircularProgress className={styles.addLoading} />
+              )}
             </div>
           </header>
           <div className={styles.trackList}>
@@ -214,6 +282,7 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
           )}
         </>
       )}
+      <ToastContainer />
     </div>
   );
 };
