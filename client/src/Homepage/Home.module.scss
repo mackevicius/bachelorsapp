@@ -165,7 +165,12 @@ main {
   align-items: center;
   list-style-type: none;
   a {
-    color: black;
+    color: #727272;
+    transition: 0.1s ease-in-out;
+
+    &:hover {
+      color: #e5e5e5;
+    }
   }
 
   li {

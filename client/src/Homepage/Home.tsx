@@ -113,6 +113,17 @@ export const Home = () => {
     );
   };
 
+  const handlePlaySuccess = () => {
+    toast(
+      'The Playlist songs started playing on your Spotify app. Open the app to check out the playlist!',
+      {
+        type: 'success',
+        position: 'top-right',
+        theme: 'colored',
+      }
+    );
+  };
+
   return (
     <div className={styles.homePageContainer}>
       <header>
@@ -137,6 +148,7 @@ export const Home = () => {
                   navigate(`/playlist/${x.id}`);
                 }}
                 onNoDevicesFound={handleNoDevicesFound}
+                onPlaySuccess={handlePlaySuccess}
               ></PlaylistCard>
             ))
           )}

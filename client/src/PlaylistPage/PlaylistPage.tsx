@@ -6,7 +6,11 @@ import axios from 'axios';
 import { JsonValue, WebSocketHook } from 'react-use-websocket/dist/lib/types';
 import { Vote } from '../App';
 import FlipMove from 'react-flip-move';
-import { TrackTile } from './Track';
+import { TrackTile } from './components/Track';
+import { Player } from '../common/Player';
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
+import { Tooltip, TooltipProps, styled, tooltipClasses } from '@mui/material';
+import Zoom from '@mui/material/Zoom';
 
 interface Props {
   socket: WebSocketHook<JsonValue | null, MessageEvent<any> | null>;
@@ -33,13 +37,16 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
   const [playlistInfo, setPlaylistInfo] = useState<
     SpotifyApi.PlaylistBaseObject | undefined
   >(undefined);
+  const [token, setToken] = useState<string | undefined>(undefined);
+  const [trackUri, setTrackUri] = useState<string | undefined>(undefined);
+  const [playerTracks, setPlayerTracks] = useState<string[]>([]);
+
   useEffect(() => {
     if ((socket.lastJsonMessage as any)?.type === 'error') {
       console.log(socket.lastJsonMessage as any);
       //notificationa
     } else {
       const vote = (socket.lastJsonMessage as any)?.data.editorContent as Vote;
-
       if (vote?.points >= 0) {
         const newTracks = tracks.map((x) => {
           if (x.track?.id === vote.trackId) {
@@ -90,6 +97,9 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
   }, [socket]);
 
   useEffect(() => {
+    axios.get(apiUrl + '/getToken', { withCredentials: true }).then((res) => {
+      setToken(res.data);
+    });
     axios
       .get(apiUrl + '/getPlaylistInfo?id=' + id, { withCredentials: true })
       .then((res) => {
@@ -102,6 +112,10 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
         res.data.sort(
           (a: Track, b: Track) => b.votes - a.votes || a.place - b.place
         );
+        const pTracks = res.data.map(
+          (track: SpotifyApi.PlaylistTrackObject) => track.track?.uri
+        );
+        setPlayerTracks(pTracks);
         setTracks(res.data);
         axios
           .get(apiUrl + '/getUserVotes?id=' + id, { withCredentials: true })
@@ -128,6 +142,17 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
       });
   }, []);
 
+  const BootstrapTooltip = styled(({ className, ...props }: TooltipProps) => (
+    <Tooltip {...props} arrow classes={{ popper: className }} />
+  ))(({ theme }) => ({
+    [`& .${tooltipClasses.arrow}`]: {
+      color: theme.palette.common.black,
+    },
+    [`& .${tooltipClasses.tooltip}`]: {
+      backgroundColor: theme.palette.common.black,
+    },
+  }));
+
   const isTrackVotedOn = (trackId: string) =>
     !!userVotes.find((x) => x.trackId === trackId);
 
@@ -143,21 +168,36 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
               <h5>{playlistInfo?.description}</h5>
             </div>
 
-            <img
-              className={styles.coverImage}
-              src={playlistInfo?.images[0].url}
-              alt={'playlistImage'}
-            />
+            <div className={styles.coverImage}>
+              <img src={playlistInfo?.images[0].url} alt={'playlistImage'} />
+
+              <button className={styles.addPlaylistButton}>
+                <BootstrapTooltip
+                  title={
+                    <h5 style={{ margin: 5, color: '#727272' }}>
+                      Save playlist
+                    </h5>
+                  }
+                  placement="left"
+                  TransitionComponent={Zoom}
+                  sx={{ fontSize: 20 }}
+                >
+                  <PlaylistAddIcon />
+                </BootstrapTooltip>
+              </button>
+            </div>
           </header>
           <div className={styles.trackList}>
             {tracks.length && (
               <FlipMove>
-                {tracks.map((x) => (
+                {tracks.map((x, index) => (
                   <TrackTile
                     key={x.track?.id}
                     track={x}
+                    currentPlace={index}
                     playlistId={id || ''}
                     userVotes={userVotes}
+                    onPlay={setTrackUri}
                     isTrackVotedOn={isTrackVotedOn}
                     onMessageSend={onMessageSend}
                   />
@@ -165,6 +205,13 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
               </FlipMove>
             )}
           </div>
+          {token && (
+            <Player
+              token={token}
+              trackUri={trackUri}
+              tracksUris={playerTracks}
+            />
+          )}
         </>
       )}
     </div>

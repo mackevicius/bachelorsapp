@@ -10,12 +10,14 @@ interface Props {
   playlist: Playlist;
   onPlaylistClick: () => void;
   onNoDevicesFound: () => void;
+  onPlaySuccess: () => void;
 }
 
 export const PlaylistCard: React.FC<Props> = ({
   playlist,
   onPlaylistClick,
   onNoDevicesFound,
+  onPlaySuccess,
 }) => {
   const context = useContext(Context);
 
@@ -30,6 +32,7 @@ export const PlaylistCard: React.FC<Props> = ({
         },
         { withCredentials: true }
       )
+      .then(() => onPlaySuccess())
       .catch((err) => {
         if (err.response.data === 'noDevices') {
           onNoDevicesFound();

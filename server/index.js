@@ -152,6 +152,7 @@ router.get(
   '/login',
   passport.authenticate('spotify', {
     scope: [
+      'streaming',
       'user-read-private',
       'user-read-email',
       'user-library-read',
@@ -196,6 +197,14 @@ router.get('/getPlaylists', (req, res) => {
       .catch((err) => {
         res.status(400).send('error');
       });
+  }
+});
+
+router.get('/getToken', (req, res) => {
+  if (!req.user) {
+    res.status(401).send('loggedOut');
+  } else {
+    res.send(req.user.accessToken);
   }
 });
 

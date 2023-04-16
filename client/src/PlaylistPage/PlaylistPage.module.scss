@@ -1,23 +1,7 @@
 .trackList {
   display: flex;
   flex-direction: column;
-}
-
-.track {
-  height: 70px;
-  margin: 10px 0;
-  display: flex;
-  column-gap: 5px;
-  border: 1px solid black;
-  background-color: lightblue;
-  justify-content: space-between;
-}
-
-.votingSection {
-  display: flex;
-}
-
-.playlistPageContainer {
+  padding: 20px;
 }
 
 .playlistHeader {
@@ -34,12 +18,37 @@
   align-items: center;
 
   .coverImage {
-    width: 350px;
-    height: 350px;
     box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px,
       rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px,
       rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
     margin-left: auto;
+    position: relative;
+
+    img {
+      width: 350px;
+      height: 350px;
+    }
+    .addPlaylistButton {
+      outline: none;
+      background: none;
+      border: none;
+      position: absolute;
+      bottom: -65px;
+      left: -65px;
+      &:hover {
+        svg {
+          cursor: pointer;
+          transform: scale(1.1);
+        }
+      }
+
+      svg {
+        transition: all ease-in-out 0.1s;
+
+        color: #1db954;
+        font-size: 120px;
+      }
+    }
   }
 
   .headerText {
