@@ -1,10 +1,6 @@
 import Skeleton from '@mui/material/Skeleton';
 import styles from '../Home.module.scss';
 
-interface MediaProps {
-  loading?: boolean;
-}
-
 export const PlaylistLoadingSkeleton = () => {
   return (
     <>

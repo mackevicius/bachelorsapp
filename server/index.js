@@ -1,13 +1,10 @@
 const { WebSocket, WebSocketServer } = require('ws');
 const http = require('http');
-const axios = require('axios');
-const path = require('path');
 const uuidv4 = require('uuid').v4;
 var cors = require('cors');
 var SpotifyWebApi = require('spotify-web-api-node');
 const bodyParser = require('body-parser');
 const cookies = require('cookie-parser');
-const querystring = require('querystring');
 const SpotifyStrategy = require('passport-spotify').Strategy;
 const passport = require('passport');
 const session = require('express-session');
@@ -15,7 +12,6 @@ const express = require('express');
 const router = express.Router();
 const dotenv = require('dotenv');
 const fs = require('fs');
-const { error } = require('console');
 const {
   validateTracks,
   postVote,
@@ -23,7 +19,6 @@ const {
   getPlaylists,
   addPlaylist,
 } = require('./dbIndex');
-const e = require('cors');
 
 dotenv.config();
 
@@ -103,7 +98,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const sessionConfig = {
-  secret: 'SPOTIFY_BLABLA',
+  secret: 'SPOTIFY_SECRET',
   resave: true,
   saveUninitialized: false,
   cookie: {
@@ -119,7 +114,6 @@ app.use(passport.session());
 
 router.use((req, res, next) => {
   const refreshToken = req.user?.refreshToken;
-  const access_token = req.user?.accessToken;
 
   if (refreshToken) {
     const spotifyApi = new SpotifyWebApi({
@@ -176,6 +170,7 @@ router.get(
   }
 );
 
+//////////////////////GET requests
 router.get('/getUserId', (req, res) => {
   if (req.user) {
     res.json(req.user.profile.id);
@@ -200,53 +195,6 @@ router.get('/getToken', (req, res) => {
     res.status(401).send('loggedOut');
   } else {
     res.send(req.user.accessToken);
-  }
-});
-
-router.post('/addPlaylist', (req, res) => {
-  addPlaylist(
-    req.body.playlistId,
-    req.body.name,
-    req.body.description,
-    req.body.imageUrl
-  )
-    .then(() => {
-      res.status(200).send(true);
-    })
-    .catch((err) => {
-      if (err.code === 409) {
-        res.status(401).send('alreadyExists');
-      }
-      res.status(500);
-    });
-});
-
-router.post('/playlistPreview', (req, res) => {
-  if (!req.user) {
-    res.status(401).send('loggedOut');
-  }
-  {
-    const spotifyApi = new SpotifyWebApi({
-      clientId: process.env.CLIENT_ID,
-      clientSecret: process.env.CLIENT_SECRET,
-      accessToken: req.user.accessToken,
-      refreshToken: req.user.refreshToken,
-    });
-
-    spotifyApi
-      .getMyDevices()
-      .then((response) => {
-        spotifyApi
-          .play({
-            device_id: response.body.devices[0].id,
-            context_uri: `spotify:playlist:${req.body.id}`,
-          })
-          .then(() => res.send(200))
-          .catch((err) => res.status(400).status('Couldnt play'));
-      })
-      .catch((err) => {
-        res.status(400).send('noDevices');
-      });
   }
 });
 
@@ -276,49 +224,6 @@ router.get('/getPlaylistTracks', (req, res) => {
       })
       .catch((err) => {
         res.send(err);
-      });
-  }
-});
-
-function base64_encode(file) {
-  return 'data:image/gif;base64,' + fs.readFileSync(file, 'base64');
-}
-
-router.post('/savePlaylist', (req, res) => {
-  if (!req.user) {
-    res.status(401).send('loggedOut');
-  } else {
-    const spotifyApi = new SpotifyWebApi({
-      clientId: process.env.CLIENT_ID,
-      clientSecret: process.env.CLIENT_SECRET,
-      accessToken: req.user.accessToken,
-      refreshToken: req.user.refreshToken,
-    });
-    console.log(req.body.imageUrl);
-    const base64str = base64_encode('./please.png').split(',')[1];
-
-    spotifyApi
-      .createPlaylist(req.body.name)
-      .then((response1) => {
-        spotifyApi
-          .uploadCustomPlaylistCoverImage(response1.body.id, base64str)
-          .then((response2) => {
-            spotifyApi
-              .addTracksToPlaylist(response1.body.id, req.body.tracks)
-              .then(() => {
-                console.log('heyy');
-                res.status(200).send(true);
-              })
-              .catch(() => res.status(400).send('lo'));
-          })
-          .catch((err) => {
-            console.log(err);
-            res.status(400).send('s');
-          });
-      })
-      .catch((err) => {
-        res.status(400).send(err);
-        console.log(err);
       });
   }
 });
@@ -373,9 +278,101 @@ router.get('/getUserVotes', (req, res) => {
   }
 });
 
-// I'm maintaining all active connections in this object
+//////////////////////POST requests
+
+function base64_encode(file) {
+  return 'data:image/gif;base64,' + fs.readFileSync(file, 'base64');
+}
+
+router.post('/savePlaylist', (req, res) => {
+  if (!req.user) {
+    res.status(401).send('loggedOut');
+  } else {
+    const spotifyApi = new SpotifyWebApi({
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      accessToken: req.user.accessToken,
+      refreshToken: req.user.refreshToken,
+    });
+    console.log(req.body.imageUrl);
+    const base64str = base64_encode('./please.png').split(',')[1];
+
+    spotifyApi
+      .createPlaylist(req.body.name)
+      .then((response1) => {
+        spotifyApi
+          .uploadCustomPlaylistCoverImage(response1.body.id, base64str)
+          .then((response2) => {
+            spotifyApi
+              .addTracksToPlaylist(response1.body.id, req.body.tracks)
+              .then(() => {
+                console.log('heyy');
+                res.status(200).send(true);
+              })
+              .catch(() => res.status(400).send('lo'));
+          })
+          .catch((err) => {
+            console.log(err);
+            res.status(400).send('s');
+          });
+      })
+      .catch((err) => {
+        res.status(400).send(err);
+        console.log(err);
+      });
+  }
+});
+
+router.post('/addPlaylist', (req, res) => {
+  addPlaylist(
+    req.body.playlistId,
+    req.body.name,
+    req.body.description,
+    req.body.imageUrl
+  )
+    .then(() => {
+      res.status(200).send(true);
+    })
+    .catch((err) => {
+      if (err.code === 409) {
+        res.status(401).send('alreadyExists');
+      }
+      res.status(500);
+    });
+});
+
+router.post('/playlistPreview', (req, res) => {
+  if (!req.user) {
+    res.status(401).send('loggedOut');
+  }
+  {
+    const spotifyApi = new SpotifyWebApi({
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      accessToken: req.user.accessToken,
+      refreshToken: req.user.refreshToken,
+    });
+
+    spotifyApi
+      .getMyDevices()
+      .then((response) => {
+        spotifyApi
+          .play({
+            device_id: response.body.devices[0].id,
+            context_uri: `spotify:playlist:${req.body.id}`,
+          })
+          .then(() => res.send(200))
+          .catch((err) => res.status(400).status('Couldnt play'));
+      })
+      .catch((err) => {
+        res.status(400).send('noDevices');
+      });
+  }
+});
+
+// maintaining all active connections in this object
 const clients = {};
-// I'm maintaining all active users in this object
+// maintaining all active users in this object
 const users = {};
 // The current editor content is maintained here.
 let editorContent = null;
@@ -411,24 +408,11 @@ function sendErrorMessage(userId, err) {
 function handleMessage(message, userId) {
   const dataFromClient = JSON.parse(message.toString());
   const json = { type: dataFromClient.type };
-  if (dataFromClient.type === typesDef.USER_EVENT) {
-    users[userId] = dataFromClient;
-    userActivity.push(`${dataFromClient.username} joined to edit the document`);
-    json.data = { users, userActivity };
-  } else if (dataFromClient.type === typesDef.CONTENT_CHANGE) {
+
+  if (dataFromClient.type === typesDef.CONTENT_CHANGE) {
     editorContent = dataFromClient.content;
     json.data = { users, editorContent, userActivity };
   }
-  broadcastMessage(json);
-}
-
-function handleDisconnect(userId) {
-  const json = { type: typesDef.USER_EVENT };
-  const username = users[userId]?.username || userId;
-  userActivity.push(`${username} left the document`);
-  json.data = { users, userActivity };
-  delete clients[userId];
-  delete users[userId];
   broadcastMessage(json);
 }
 
@@ -453,7 +437,6 @@ wsServer.on('connection', function (connection, req) {
     }
   });
   // User disconnected
-  connection.on('close', () => handleDisconnect(userId));
 });
 
 app.use('/', router);

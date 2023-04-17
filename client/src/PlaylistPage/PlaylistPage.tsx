@@ -66,7 +66,7 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
           theme: 'colored',
         });
       })
-      .catch((err) => {
+      .catch(() => {
         toast('Failed to add playlist', {
           position: 'top-right',
           type: 'error',
@@ -79,7 +79,11 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
   useEffect(() => {
     if ((socket.lastJsonMessage as any)?.type === 'error') {
       console.log(socket.lastJsonMessage as any);
-      //notificationa
+      toast('Unable to post vote. Try again later', {
+        position: 'top-right',
+        type: 'error',
+        theme: 'colored',
+      });
     } else {
       const vote = (socket.lastJsonMessage as any)?.data.editorContent as Vote;
       if (vote?.points >= 0) {

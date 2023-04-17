@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState, useRef } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Home.module.scss';
 import { PlaylistLoadingSkeleton } from './components/PlaylistLoadingSkeleton';
@@ -24,18 +24,11 @@ export interface Playlist {
 
 export const Home = () => {
   const navigate = useNavigate();
-  const [playlists, setPlaylists] = useState<any>();
+  const [playlists, setPlaylists] = useState<Playlist[]>();
   const [loading, setLoading] = useState<boolean>(true);
   const context = useContext(Context);
   const divRef = useRef<HTMLDivElement>(null);
   const [itemOffset, setItemOffset] = useState(0);
-
-  // Simulate fetching items from another resources.
-  // (This could be items from props; or items loaded in a local state
-  // from an API endpoint with useEffect and useState)
-  const endOffset = itemOffset + COUNT;
-  const currentItems = playlists?.slice(itemOffset, endOffset);
-  const pageCount = Math.ceil(playlists?.length / COUNT);
 
   const getPlaylists = () => {
     axios
@@ -95,12 +88,18 @@ export const Home = () => {
       .finally(() => setLoading(false));
   };
 
-  const handlePageClick = (event: any) => {
-    const newOffset = (event.selected * COUNT) % playlists.length;
-    console.log(
-      `User requested page number ${event.selected}, which is offset ${newOffset}`
-    );
-    setItemOffset(newOffset);
+  const endOffset = itemOffset + COUNT;
+  const currentItems = playlists?.slice(itemOffset, endOffset);
+  const pageCount = playlists ? Math.ceil(playlists?.length / COUNT) : 1;
+
+  const handlePageClick = (event: { selected: number }) => {
+    if (playlists) {
+      const newOffset = (event.selected * COUNT) % playlists?.length;
+      console.log(
+        `User requested page number ${event.selected}, which is offset ${newOffset}`
+      );
+      setItemOffset(newOffset);
+    }
   };
 
   const handleNoDevicesFound = () => {
