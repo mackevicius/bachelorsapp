@@ -73,7 +73,7 @@
     max-width: 400px;
 
     span {
-      color: #727272;
+      color: #818181;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -115,6 +115,9 @@
       svg {
         color: #d22b2b;
       }
+      span {
+        color: white;
+      }
     }
 
     span {
@@ -132,10 +135,15 @@
     @extend .vote;
     svg {
       color: #d22b2b;
-      font-size: 40px;
+      font-size: 35px;
     }
     span {
       color: white;
+    }
+    &:hover,
+    &:focus {
+      cursor: default;
+      transform: scale(1);
     }
   }
 }

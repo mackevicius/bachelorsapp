@@ -1,0 +1,23 @@
+.logOut {
+  outline: none;
+  border: none;
+  background: none;
+  position: absolute;
+  top: 5px;
+  right: 0;
+  z-index: 30;
+
+  &:hover {
+    cursor: pointer;
+
+    svg {
+      color: white;
+    }
+  }
+
+  svg {
+    transition: color ease-in-out 0.1s;
+    font-size: 50px;
+    color: 'red';
+  }
+}

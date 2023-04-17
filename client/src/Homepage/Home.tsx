@@ -11,6 +11,7 @@ import { PlaylistCard } from './components/PlaylistCard';
 import SearchBox from './components/SearchBox';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { LogOutBar } from '../common/LogOut';
 
 const COUNT = 20;
 
@@ -126,6 +127,7 @@ export const Home = () => {
 
   return (
     <div className={styles.homePageContainer}>
+      <LogOutBar />
       <header>
         <SearchBox
           isPlaylistsLoading={loading}

@@ -54,8 +54,8 @@
     .addLoading {
       color: #1db954;
       position: absolute;
-      bottom: -65px;
-      left: -65px;
+      bottom: -5%;
+      left: -5%;
     }
   }
 
@@ -69,6 +69,13 @@
       color: #727272;
     }
   }
+}
+
+.playlistLoading {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media only screen and (max-width: 1500px) {

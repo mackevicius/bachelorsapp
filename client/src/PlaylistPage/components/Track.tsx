@@ -63,15 +63,15 @@ export const TrackTile: React.FC<Props> = forwardRef(
             )}
           </span>
         </div>
-        <button className={styles.voteTotal}>
+        <div className={styles.voteTotal}>
           <span>{props.track.votes}</span>
           <FavoriteIcon />
-        </button>
+        </div>
         <div className={styles.votingSection}>
           {/* <span>{(lastJsonMessage as any)?.data.points}</span> */}
           {props.isTrackVotedOn(props.track.track?.id || '') ? (
             <>
-              <span style={{ marginLeft: 10, color: '#727272', fontSize: 12 }}>
+              <span style={{ marginLeft: 10, color: '#818181', fontSize: 12 }}>
                 You gave:{' '}
                 {
                   props.userVotes.find(

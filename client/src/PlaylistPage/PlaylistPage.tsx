@@ -9,15 +9,12 @@ import FlipMove from 'react-flip-move';
 import { TrackTile } from './components/Track';
 import { Player } from '../common/Player';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
-import {
-  CircularProgress,
-  Tooltip,
-  TooltipProps,
-  styled,
-  tooltipClasses,
-} from '@mui/material';
 import Zoom from '@mui/material/Zoom';
 import { ToastContainer, toast } from 'react-toastify';
+import { PlaylistPageLoading } from './components/PlaylistPageLoading';
+import { BootstrapTooltip } from '../common/BootstrapTooltip';
+import { CircularProgress } from '@mui/material';
+import { LogOutBar } from '../common/LogOut';
 
 interface Props {
   socket: WebSocketHook<JsonValue | null, MessageEvent<any> | null>;
@@ -48,26 +45,6 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
   const [trackUri, setTrackUri] = useState<string | undefined>(undefined);
   const [playerTracks, setPlayerTracks] = useState<string[]>([]);
   const [addLoading, setAddLoading] = useState<boolean>(false);
-
-  function convertURIToImageData(URI: string) {
-    return new Promise(function (resolve, reject) {
-      let canvas = document.createElement('canvas'),
-        context = canvas.getContext('2d'),
-        image = new Image();
-      image.crossOrigin = 'Anonymous';
-      image.addEventListener(
-        'load',
-        function () {
-          canvas.width = 300;
-          canvas.height = 300;
-          context?.drawImage(image, 0, 0, canvas.width, canvas.height);
-          resolve(context?.getImageData(0, 0, canvas.width, canvas.height));
-        },
-        false
-      );
-      image.src = URI;
-    });
-  }
 
   const savePlaylist = () => {
     setAddLoading(true);
@@ -155,74 +132,63 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
   }, [socket]);
 
   useEffect(() => {
-    axios.get(apiUrl + '/getToken', { withCredentials: true }).then((res) => {
-      setToken(res.data);
-    });
     axios
-      .get(apiUrl + '/getPlaylistInfo?id=' + id, { withCredentials: true })
+      .get(apiUrl + '/getToken', { withCredentials: true })
       .then((res) => {
-        setPlaylistInfo(res.data.body);
-        convertURIToImageData(res.data.body.images[0].url as string).then(
-          (res) => {
-            console.log(res);
-          }
-        );
-      });
-
-    axios
-      .get(apiUrl + '/getPlaylistTracks?id=' + id, { withCredentials: true })
-      .then((res) => {
-        res.data.sort(
-          (a: Track, b: Track) => b.votes - a.votes || a.place - b.place
-        );
-        const pTracks = res.data.map(
-          (track: SpotifyApi.PlaylistTrackObject) => track.track?.uri
-        );
-        setPlayerTracks(pTracks);
-        setTracks(res.data);
+        setToken(res.data);
         axios
-          .get(apiUrl + '/getUserVotes?id=' + id, { withCredentials: true })
+          .get(apiUrl + '/getPlaylistInfo?id=' + id, { withCredentials: true })
           .then((res) => {
-            setUserVotes(res.data);
-          })
-          .catch((err) => {
-            if (err.response.data === 'loggedOut') {
-              localStorage.removeItem('loggedIn');
-              navigate('/login');
-            }
-          })
-          .finally(() => {});
+            setPlaylistInfo(res.data.body);
+            axios
+              .get(apiUrl + '/getPlaylistTracks?id=' + id, {
+                withCredentials: true,
+              })
+              .then((res) => {
+                res.data.sort(
+                  (a: Track, b: Track) => b.votes - a.votes || a.place - b.place
+                );
+                const pTracks = res.data.map(
+                  (track: SpotifyApi.PlaylistTrackObject) => track.track?.uri
+                );
+                setPlayerTracks(pTracks);
+                setTracks(res.data);
+                axios
+                  .get(apiUrl + '/getUserVotes?id=' + id, {
+                    withCredentials: true,
+                  })
+                  .then((res) => {
+                    setUserVotes(res.data);
+                  });
+              })
+              .catch((err) => {
+                console.error(err);
+                if (err.response.data === 'loggedOut') {
+                  localStorage.removeItem('loggedIn');
+                  navigate('/login');
+                }
+              })
+              .finally(() => {
+                setIsLoading(false);
+              });
+          });
       })
       .catch((err) => {
-        console.error(err);
         if (err.response.data === 'loggedOut') {
           localStorage.removeItem('loggedIn');
           navigate('/login');
         }
-      })
-      .finally(() => {
-        setIsLoading(false);
       });
   }, []);
-
-  const BootstrapTooltip = styled(({ className, ...props }: TooltipProps) => (
-    <Tooltip {...props} arrow classes={{ popper: className }} />
-  ))(({ theme }) => ({
-    [`& .${tooltipClasses.arrow}`]: {
-      color: theme.palette.common.black,
-    },
-    [`& .${tooltipClasses.tooltip}`]: {
-      backgroundColor: theme.palette.common.black,
-    },
-  }));
 
   const isTrackVotedOn = (trackId: string) =>
     !!userVotes.find((x) => x.trackId === trackId);
 
   return (
     <div className={styles.playlistPageContainer}>
+      <LogOutBar />
       {isLoading ? (
-        <div>liol</div>
+        <PlaylistPageLoading />
       ) : (
         <>
           <header className={styles.playlistHeader}>
@@ -232,7 +198,9 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
             </div>
             <div className={styles.coverImage}>
               <img src={playlistInfo?.images[0].url} alt={'playlistImage'} />
-              {!addLoading ? (
+              {addLoading ? (
+                <CircularProgress className={styles.addLoading} size={50} />
+              ) : (
                 <button
                   className={styles.addPlaylistButton}
                   onClick={savePlaylist}
@@ -250,8 +218,6 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
                     <PlaylistAddIcon />
                   </BootstrapTooltip>
                 </button>
-              ) : (
-                <CircularProgress className={styles.addLoading} />
               )}
             </div>
           </header>

@@ -222,27 +222,32 @@ router.post('/addPlaylist', (req, res) => {
 });
 
 router.post('/playlistPreview', (req, res) => {
-  const spotifyApi = new SpotifyWebApi({
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    accessToken: req.user.accessToken,
-    refreshToken: req.user.refreshToken,
-  });
-
-  spotifyApi
-    .getMyDevices()
-    .then((response) => {
-      spotifyApi
-        .play({
-          device_id: response.body.devices[0].id,
-          context_uri: `spotify:playlist:${req.body.id}`,
-        })
-        .then(() => res.send(200))
-        .catch((err) => res.status(400).status('Couldnt play'));
-    })
-    .catch((err) => {
-      res.status(400).send('noDevices');
+  if (!req.user) {
+    res.status(401).send('loggedOut');
+  }
+  {
+    const spotifyApi = new SpotifyWebApi({
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      accessToken: req.user.accessToken,
+      refreshToken: req.user.refreshToken,
     });
+
+    spotifyApi
+      .getMyDevices()
+      .then((response) => {
+        spotifyApi
+          .play({
+            device_id: response.body.devices[0].id,
+            context_uri: `spotify:playlist:${req.body.id}`,
+          })
+          .then(() => res.send(200))
+          .catch((err) => res.status(400).status('Couldnt play'));
+      })
+      .catch((err) => {
+        res.status(400).send('noDevices');
+      });
+  }
 });
 
 router.get('/getPlaylistTracks', (req, res) => {
@@ -274,22 +279,6 @@ router.get('/getPlaylistTracks', (req, res) => {
       });
   }
 });
-
-function convertImageToBase64(imgUrl, callback) {
-  const image = new Image();
-  image.crossOrigin = 'anonymous';
-  image.onload = () => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.height = 300;
-    canvas.width = 300;
-    ctx?.drawImage(image, 0, 0);
-    const dataUrl = canvas.toDataURL();
-    callback && callback(dataUrl);
-    return dataUrl;
-  };
-  image.src = imgUrl;
-}
 
 function base64_encode(file) {
   return 'data:image/gif;base64,' + fs.readFileSync(file, 'base64');
