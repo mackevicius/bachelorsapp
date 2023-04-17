@@ -3,6 +3,7 @@ import { forwardRef } from 'react';
 import { Track, UserVote } from '../PlaylistPage';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import styles from './Track.module.scss';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 
 interface Props {
   track: Track;
@@ -39,7 +40,7 @@ export const TrackTile: React.FC<Props> = forwardRef(
           <img src={props.track.track?.album.images[0].url} alt="track image" />
         </div>
         <div className={styles.nameSection}>
-          <b>{props.track.track?.name} </b>
+          <b title={props.track.track?.name}>{props.track.track?.name}</b>
           <span>
             {props.track.track?.artists.map(
               (artist: SpotifyApi.ArtistObjectSimplified, index) => {
@@ -47,19 +48,30 @@ export const TrackTile: React.FC<Props> = forwardRef(
                   index ===
                   (props.track.track?.artists.length as number) - 1
                 ) {
-                  return <span key={artist.id}>{artist.name}</span>;
+                  return (
+                    <span key={artist.id} title={artist.name}>
+                      {artist.name}
+                    </span>
+                  );
                 }
-                return <span key={artist.id}>{artist.name}, </span>;
+                return (
+                  <span key={artist.id} title={artist.name}>
+                    {artist.name},{' '}
+                  </span>
+                );
               }
             )}
           </span>
         </div>
+        <button className={styles.voteTotal}>
+          <span>{props.track.votes}</span>
+          <FavoriteIcon />
+        </button>
         <div className={styles.votingSection}>
-          <span>votes: {props.track.votes}</span>
           {/* <span>{(lastJsonMessage as any)?.data.points}</span> */}
           {props.isTrackVotedOn(props.track.track?.id || '') ? (
             <>
-              <span style={{ marginLeft: 10 }}>
+              <span style={{ marginLeft: 10, color: '#727272', fontSize: 12 }}>
                 You gave:{' '}
                 {
                   props.userVotes.find(
@@ -69,6 +81,9 @@ export const TrackTile: React.FC<Props> = forwardRef(
                 points
               </span>
               <Button
+                color="error"
+                variant="contained"
+                size="small"
                 onClick={() =>
                   props.onMessageSend(
                     props.playlistId || '',
@@ -84,11 +99,9 @@ export const TrackTile: React.FC<Props> = forwardRef(
             props.userVotes.map(
               (x) =>
                 !x.trackId && (
-                  <Button
+                  <button
+                    className={styles.vote}
                     key={x.points}
-                    size="small"
-                    type="submit"
-                    color="success"
                     onClick={() =>
                       props.onMessageSend(
                         props.playlistId || '',
@@ -97,8 +110,9 @@ export const TrackTile: React.FC<Props> = forwardRef(
                       )
                     }
                   >
-                    {x.points}
-                  </Button>
+                    <span>{x.points}</span>
+                    <FavoriteIcon />
+                  </button>
                 )
             )
           )}

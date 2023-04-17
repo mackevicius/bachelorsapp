@@ -36,7 +36,8 @@
       position: absolute;
       bottom: -65px;
       left: -65px;
-      &:hover {
+      &:hover,
+      &:focus {
         svg {
           cursor: pointer;
           transform: scale(1.1);
@@ -94,14 +95,27 @@
     }
   }
 }
-@media only screen and (max-width: 700px) {
+
+@media only screen and (max-width: 800px) {
   .playlistHeader {
     flex-direction: column;
     justify-content: center;
     row-gap: 20px;
 
+    .coverImage {
+      margin-left: unset;
+      img {
+        width: 150px;
+        height: 150px;
+      }
+      .addPlaylistButton {
+        bottom: 90px;
+      }
+    }
+
     .headerText {
       h1 {
+        margin-top: 50px;
         font-size: 2.5rem;
       }
       h5 {
