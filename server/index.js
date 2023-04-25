@@ -173,14 +173,14 @@ router.get(
 //////////////////////GET requests
 router.get('/getUserId', (req, res) => {
   if (req.user) {
-    res.json(req.user.profile.id);
+    return res.json(req.user.profile.id);
   }
   res.status(401).send('loggedOut');
 });
 
 router.get('/getPlaylists', (req, res) => {
   if (!req.user) {
-    res.status(401).send('loggedOut');
+    return res.status(401).send('loggedOut');
   } else {
     getPlaylists()
       .then((playlists) => res.send(playlists))
@@ -192,7 +192,7 @@ router.get('/getPlaylists', (req, res) => {
 
 router.get('/getToken', (req, res) => {
   if (!req.user) {
-    res.status(401).send('loggedOut');
+    return res.status(401).send('loggedOut');
   } else {
     res.send(req.user.accessToken);
   }
@@ -200,7 +200,7 @@ router.get('/getToken', (req, res) => {
 
 router.get('/getPlaylistTracks', (req, res) => {
   if (!req.user) {
-    res.status(401).send('loggedOut');
+    return res.status(401).send('loggedOut');
   } else {
     const spotifyApi = new SpotifyWebApi({
       clientId: process.env.CLIENT_ID,
@@ -230,7 +230,7 @@ router.get('/getPlaylistTracks', (req, res) => {
 
 router.get('/getPlaylistInfo', (req, res) => {
   if (!req.user) {
-    res.status(401).send('loggedOut');
+    return res.status(401).send('loggedOut');
   } else {
     const spotifyApi = new SpotifyWebApi({
       clientId: process.env.CLIENT_ID,
@@ -247,7 +247,7 @@ router.get('/getPlaylistInfo', (req, res) => {
 
 router.get('/searchPlaylists', (req, res) => {
   if (!req.user) {
-    res.status(401).send('loggedOut');
+    return res.status(401).send('loggedOut');
   } else {
     const spotifyApi = new SpotifyWebApi({
       clientId: process.env.CLIENT_ID,
@@ -270,7 +270,7 @@ router.get('/searchPlaylists', (req, res) => {
 
 router.get('/getUserVotes', (req, res) => {
   if (!req.user) {
-    res.status(401).send('loggedOut');
+    return res.status(401).send('loggedOut');
   } else {
     getUserVotes(req.user.profile.id, req.query.id).then((response) => {
       res.send(response);
@@ -286,7 +286,7 @@ function base64_encode(file) {
 
 router.post('/savePlaylist', (req, res) => {
   if (!req.user) {
-    res.status(401).send('loggedOut');
+    return res.status(401).send('loggedOut');
   } else {
     const spotifyApi = new SpotifyWebApi({
       clientId: process.env.CLIENT_ID,
@@ -307,7 +307,7 @@ router.post('/savePlaylist', (req, res) => {
               .addTracksToPlaylist(response1.body.id, req.body.tracks)
               .then(() => {
                 console.log('heyy');
-                res.status(200).send(true);
+                res.sendStatus(200);
               })
               .catch(() => res.status(400).send('lo'));
           })
@@ -337,15 +337,14 @@ router.post('/addPlaylist', (req, res) => {
       if (err.code === 409) {
         res.status(401).send('alreadyExists');
       }
-      res.status(500);
+      res.sendStatus(500);
     });
 });
 
 router.post('/playlistPreview', (req, res) => {
   if (!req.user) {
-    res.status(401).send('loggedOut');
-  }
-  {
+    return res.status(401).send('loggedOut');
+  } else {
     const spotifyApi = new SpotifyWebApi({
       clientId: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
@@ -356,13 +355,16 @@ router.post('/playlistPreview', (req, res) => {
     spotifyApi
       .getMyDevices()
       .then((response) => {
+        const filteredDevices = response.body.devices.filter(
+          (x) => !x.name.toLowerCase().includes('web player')
+        );
         spotifyApi
           .play({
-            device_id: response.body.devices[0].id,
+            device_id: filteredDevices[0].id,
             context_uri: `spotify:playlist:${req.body.id}`,
           })
-          .then(() => res.send(200))
-          .catch((err) => res.status(400).status('Couldnt play'));
+          .then(() => res.sendStatus(200))
+          .catch((err) => res.status(400).send('Couldnt play'));
       })
       .catch((err) => {
         res.status(400).send('noDevices');
