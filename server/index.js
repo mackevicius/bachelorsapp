@@ -356,7 +356,9 @@ router.post('/playlistPreview', (req, res) => {
       .getMyDevices()
       .then((response) => {
         const filteredDevices = response.body.devices.filter(
-          (x) => !x.name.toLowerCase().includes('web player')
+          (x) =>
+            !x.name.toLowerCase().includes('web player') &&
+            !x.name.toLowerCase().includes('voting app')
         );
         spotifyApi
           .play({
