@@ -294,7 +294,6 @@ router.post('/savePlaylist', (req, res) => {
       accessToken: req.user.accessToken,
       refreshToken: req.user.refreshToken,
     });
-    console.log(req.body.imageUrl);
     const base64str = base64_encode('./please.png').split(',')[1];
 
     spotifyApi
@@ -440,7 +439,6 @@ wsServer.on('connection', function (connection, req) {
         });
     }
   });
-  // User disconnected
 });
 
 app.use('/', router);
