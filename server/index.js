@@ -334,7 +334,7 @@ router.post('/addPlaylist', (req, res) => {
     })
     .catch((err) => {
       if (err.code === 409) {
-        res.status(401).send('alreadyExists');
+        return res.status(401).send('alreadyExists');
       }
       res.sendStatus(500);
     });

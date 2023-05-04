@@ -39,7 +39,7 @@ export const Home = () => {
         localStorage.setItem('loggedIn', 'yes');
       })
       .catch((err) => {
-        if (err.response.data === 'loggedOut') {
+        if (err.response?.data === 'loggedOut') {
           localStorage.removeItem('loggedIn');
           navigate('/login');
         }
@@ -73,14 +73,14 @@ export const Home = () => {
         });
       })
       .catch((err) => {
-        if (err.response.data === 'alreadyExists') {
+        if (err.response?.data === 'alreadyExists') {
           toast('Playlist already exists', {
             type: 'error',
             position: 'top-right',
             theme: 'colored',
           });
         }
-        if (err.response.data === 'loggedOut') {
+        if (err.response?.data === 'loggedOut') {
           localStorage.removeItem('loggedIn');
           navigate('/login');
         }

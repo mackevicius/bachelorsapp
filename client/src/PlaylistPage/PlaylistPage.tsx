@@ -167,7 +167,7 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
               })
               .catch((err) => {
                 console.error(err);
-                if (err.response.data === 'loggedOut') {
+                if (err.response?.data === 'loggedOut') {
                   localStorage.removeItem('loggedIn');
                   navigate('/login');
                 }
@@ -178,7 +178,7 @@ export const PlaylistPage: React.FC<Props> = ({ socket, onMessageSend }) => {
           });
       })
       .catch((err) => {
-        if (err.response.data === 'loggedOut') {
+        if (err.response?.data === 'loggedOut') {
           localStorage.removeItem('loggedIn');
           navigate('/login');
         }

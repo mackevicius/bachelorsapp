@@ -34,7 +34,7 @@ export const PlaylistCard: React.FC<Props> = ({
       )
       .then(() => onPlaySuccess())
       .catch((err) => {
-        if (err.response.data === 'noDevices') {
+        if (err.response?.data === 'noDevices') {
           onNoDevicesFound();
         }
       });
